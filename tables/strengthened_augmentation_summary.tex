@@ -1,0 +1,25 @@
+\begin{tabular}{llrrrr}
+\toprule
+Dataset & Method & AUPRC & Macro-F1 & Minority F1 & Brier \\
+\midrule
+COVID-19 & Real only & 0.354 & 0.498 & 0.159 & 0.196 \\
+ & Random oversampling & 0.357 & 0.535 & 0.336 & 0.230 \\
+ & Random undersampling & 0.337 & 0.504 & 0.379 & 0.279 \\
+ & SMOTE & 0.323 & 0.508 & 0.237 & 0.219 \\
+ & Class weighting & 0.352 & 0.533 & 0.334 & 0.233 \\
+ & Standard CTGAN & 0.339 & 0.508 & 0.286 & 0.236 \\
+ & SepAware CTGAN & 0.354 & 0.541 & 0.335 & 0.231 \\
+ & Standard TVAE & 0.347 & 0.524 & 0.237 & 0.211 \\
+ & SepAware TVAE & 0.332 & 0.495 & 0.183 & 0.213 \\
+\midrule
+Vigitel & Real only & 0.288 & 0.463 & 0.021 & 0.134 \\
+ & Random oversampling & 0.284 & 0.575 & 0.351 & 0.202 \\
+ & Random undersampling & 0.279 & 0.552 & 0.365 & 0.230 \\
+ & SMOTE & 0.237 & 0.506 & 0.174 & 0.175 \\
+ & Class weighting & 0.287 & 0.574 & 0.346 & 0.200 \\
+ & Standard CTGAN & 0.237 & 0.508 & 0.175 & 0.176 \\
+ & SepAware CTGAN & 0.250 & 0.527 & 0.215 & 0.176 \\
+ & Standard TVAE & 0.253 & 0.493 & 0.107 & 0.154 \\
+ & SepAware TVAE & 0.252 & 0.487 & 0.093 & 0.153 \\
+\bottomrule
+\end{tabular}

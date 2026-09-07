@@ -1,0 +1,38 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Principal findings}
+
+The study produces two complementary findings. First, the completed synthetic-to-real factorial experiment shows that separability is an attributable, utility-relevant property in Vigitel: enabling separability pressure produces an approximately 0.10 Macro-F1 step, while anchor pressure contributes little. The corresponding COVID-19 attribution is not established because residual fold variation dominates. Second, the strengthened augmentation analysis shows that this large substitution result should not be interpreted as a general augmentation advantage. \sepa{} improves CTGAN AUPRC modestly on both datasets, but random oversampling is highly competitive and \sepa{} does not improve TVAE.
+
+This distinction matters. TSTR asks whether a synthetic dataset can substitute for real training data; augmentation asks whether synthetic minority records add value when the original training records remain available. A method may improve the former without being the best practical solution for the latter. For Vigitel, real-only AUPRC was 0.288, random oversampling achieved 0.284, and \sepa{} CTGAN achieved 0.250. Its advantage was relative to standard CTGAN, not relative to every alternative. For COVID-19, random oversampling achieved the highest mean AUPRC (0.357), while \sepa{} CTGAN and real-only training both achieved 0.354.
+
+\subsection{Comparison with prior work}
+
+The competitiveness of random oversampling agrees with a 2026 JMIR study in which sampling with replacement matched substantially more complex augmentation in small-data settings \citep{huetdastarac2026}. Our results extend that caution to rare outcomes: greater model complexity does not ensure that augmentation adds information. The generator and its sampling mechanism can matter as much as the downstream selector.
+
+Contemporary evaluation frameworks emphasize that fidelity, utility, and privacy can move in different directions \citep{hernandez2025,nanevski2026}. We observe the same pattern within the minority class. \sepa{} CTGAN improves nearest-minority coverage while reducing pairwise minority diversity. A single aggregate fidelity score would not expose that trade-off. The finding also supports calls for explicit privacy and utility threat models rather than duplicate checks alone \citep{kaabachi2025}.
+
+\subsection{When separability helps}
+
+The Vigitel--COVID contrast suggests that separability pressure interacts with the structure and stability of the outcome class. Vigitel provides a larger sample and a more repeatable factorial response. COVID-19 contains only 83 deaths and a heterogeneous set of admission reasons and comorbidities. In that setting, the same scalar margin can be unstable or can compress distinct mortality patterns. The repeated CTGAN augmentation results nevertheless show small positive AUPRC differences for both datasets, suggesting that the selector can improve a candidate pool even when the factorial attribution is weak. This pattern remains exploratory until additional datasets and external or temporal validation test its portability.
+
+The negative TVAE result is equally important. SDV's TVAE does not support native outcome-conditional sampling, so the experiment fitted a minority-conditional feature model. The resulting synthetic minorities had very low diversity, especially for Vigitel. Post-selection could not recover information absent from the candidate pool and sometimes reduced performance further. \sepa{} is therefore not generator agnostic merely because its scoring rule can technically be applied to another generator.
+
+\subsection{The easier-case explanation}
+\label{sec:alternative}
+
+Higher separability can represent clearer class-conditional signal, but it can also represent deletion of difficult cases. The strengthened diagnostics support both interpretations. Smaller held-out-minority coverage distance is favorable: selected CTGAN records lie closer to real positive test cases. Lower within-minority diversity is unfavorable: the selector concentrates the candidate distribution. Because no externally validated phenotype labels are available, we cannot determine whether the lost variation is noise, redundant spread, or clinically meaningful heterogeneity.
+
+This trade-off changes the decision rule for the method. A Macro-F1 or AUPRC gain alone is insufficient. A favorable use case requires improvement relative to the corresponding standard generator without material loss of calibration, minority coverage, or clinically meaningful diversity. Boundary-stratified error analysis and expert-defined minority phenotypes are needed to determine how much separability is too much.
+
+\subsection{Privacy implications}
+
+No exact matches were observed and the membership proxy remained near chance. These are reassuring diagnostics but not evidence of anonymity. \sepa{} explicitly prefers records near the real manifold, so the same mechanism that improves utility could increase disclosure risk under a stronger attacker. Membership and attribute inference under explicit attacker knowledge, rarity-stratified analyses, and formal privacy mechanisms remain necessary before any synthetic records are released.
+
+\subsection{Statistical interpretation}
+\label{sec:stat-limitations}
+
+The factorial conditions share candidate pools within folds and cross-validation training sets overlap. Blocking captures the paired design, but classical $P$ values remain conditional on one partition, generator configuration, and dataset sample. The strengthened augmentation analysis uses three repeated five-fold partitions with three classifiers; its 45 fold--classifier observations still share source records and do not constitute 45 independent clinical samples. The reported paired intervals are therefore descriptive. Independent datasets and external or temporal validation are required for confirmatory inference.
+
+The appropriate conclusion is therefore conditional. Separability-aware selection controls a property not captured by class balance or global fidelity and can improve CTGAN relative to its unselected candidate pool. It is not uniformly beneficial across generators, it does not consistently beat simple oversampling, and its coverage gains may be purchased with reduced diversity. Those boundary conditions are the scientific contribution of the current two-dataset study.

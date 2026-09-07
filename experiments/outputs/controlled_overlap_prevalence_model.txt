@@ -1,0 +1,40 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                  auprc   R-squared:                       0.815
+Model:                            OLS   Adj. R-squared:                  0.811
+Method:                 Least Squares   F-statistic:                     221.4
+Date:                Sun, 23 Aug 2026   Prob (F-statistic):          1.27e-261
+Time:                        19:18:50   Log-Likelihood:                 524.13
+No. Observations:                 720   AIC:                            -1014.
+Df Residuals:                     703   BIC:                            -936.4
+Df Model:                          16                                         
+Covariance Type:                  HC3                                         
+======================================================================================================================
+                                                         coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------------------------------------
+Intercept                                              0.1068      0.021      5.056      0.000       0.065       0.148
+C(method)[T.Real only]                                 0.0238      0.029      0.809      0.418      -0.034       0.081
+C(method)[T.SMOTE]                                    -0.0345      0.030     -1.157      0.247      -0.093       0.024
+C(method)[T.SepAware-SMOTE]                           -0.0019      0.030     -0.065      0.948      -0.060       0.056
+C(overlap)[T.low]                                      0.4280      0.021     20.037      0.000       0.386       0.470
+C(overlap)[T.moderate]                                 0.2068      0.022      9.317      0.000       0.163       0.250
+C(classifier)[T.RandomForest]                          0.2070      0.009     23.208      0.000       0.189       0.224
+C(method)[T.Real only]:C(overlap)[T.low]              -0.0158      0.030     -0.532      0.595      -0.074       0.043
+C(method)[T.SMOTE]:C(overlap)[T.low]                   0.0180      0.030      0.593      0.553      -0.041       0.077
+C(method)[T.SepAware-SMOTE]:C(overlap)[T.low]          0.0026      0.030      0.085      0.932      -0.056       0.061
+C(method)[T.Real only]:C(overlap)[T.moderate]         -0.0074      0.031     -0.237      0.812      -0.068       0.053
+C(method)[T.SMOTE]:C(overlap)[T.moderate]              0.0065      0.032      0.207      0.836      -0.055       0.068
+C(method)[T.SepAware-SMOTE]:C(overlap)[T.moderate]     0.0020      0.031      0.066      0.948      -0.059       0.063
+prevalence                                             1.3135      0.085     15.372      0.000       1.146       1.481
+C(method)[T.Real only]:prevalence                     -0.0242      0.120     -0.201      0.841      -0.260       0.212
+C(method)[T.SMOTE]:prevalence                          0.0832      0.122      0.682      0.495      -0.156       0.322
+C(method)[T.SepAware-SMOTE]:prevalence                 0.0123      0.120      0.102      0.919      -0.223       0.248
+==============================================================================
+Omnibus:                        9.262   Durbin-Watson:                   1.477
+Prob(Omnibus):                  0.010   Jarque-Bera (JB):                7.898
+Skew:                           0.185   Prob(JB):                       0.0193
+Kurtosis:                       2.645   Cond. No.                         58.1
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC3)

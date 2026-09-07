@@ -1,0 +1,34 @@
+\section{Reproducibility and Artefact Status}
+\label{app:audit}
+
+Table~\ref{tab:audit} lists the status of every research artefact consulted while preparing this paper and states how each was treated. Superseded, protocol-only, or failed runs are excluded from all numerical claims in the main text; only executed, leakage-controlled five-fold notebooks and their exported CSV tables are reported as evidence.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{.29\textwidth}>{\raggedright\arraybackslash}p{.18\textwidth}>{\raggedright\arraybackslash}p{.45\textwidth}}
+\caption{Status of research artefacts consulted during manuscript preparation.}\label{tab:audit}\\
+\toprule
+Artefact & Status & Manuscript treatment\\
+\midrule
+\endfirsthead
+\toprule
+Artefact & Status & Manuscript treatment\\
+\midrule
+\endhead
+Older dataset-specific fixed-$\lambda$ notebooks & Superseded single-split studies & Excluded from numerical claims because they use one 75/25 split.\\
+Combined \sepa{} fixed-$\lambda$ notebook & Executed five-fold study & Authority for fold-level fixed-$\lambda$ comparisons (Table~\ref{tab:fixedutility}).\\
+Protocol-audited $2^2$ cross-validation notebook & Executed & Superseded by the replicated factorial notebook below; retained only for earlier condition summaries and correlation interpretation during development.\\
+Replicated factorial ANOVA notebook (with results) & Latest executed experiment & Authority for the 40 fold responses, ANOVA, effects, and diagnostics (Section~\ref{sec:factorial-results}).\\
+Factorial assumption-test script and CSVs & Executed after the notebook above & Authority for expanded residual tests and the blocked-versus-unblocked sensitivity analysis.\\
+COVID \dacpf{} raw and summary CSVs & Executed & Authority for augmentation results in Table~\ref{tab:dacpf}.\\
+TabPFN augmentation notebook & Failed dependency, no output & Protocol only; no result claimed.\\
+Unexecuted causal-filter notebooks & Incomplete protocol & Discussed as development history / future work, not evidence.\\
+Cluster-then-augment notebook & No authoritative exported result located & Excluded from numerical results.\\
+Strengthened two-dataset augmentation script & Executed three-repeat five-fold experiment & Authority for conventional baselines, CTGAN/TVAE augmentation, calibration, minority coverage/diversity, and privacy-proxy results.\\
+Controlled prevalence-by-overlap script & Executed mechanism experiment & Authority for the independent prevalence and overlap manipulation; not counted as a third health dataset.\\
+\bottomrule
+\end{longtable}
+
+\subsection{Result-authority decisions}
+
+The rerun factorial experiment differs numerically from earlier protocol-audited notes because CTGAN is stochastic even under a fixed, recorded software stack; this paper uses the newly executed observations consistently and does not mix values across reruns. An unblocked $2^2r$ decomposition that treats folds as replications is also present in the repository and assigns COVID-19 90.01\% error and Vigitel 16.92\% error; the main text instead uses the blocked model (Equation~\ref{eq:blocked}), which separates fold variation from treatment variation and yields 81.53\% and 3.59\% respectively (Table~\ref{tab:anova}). Both calculations exist in the repository, but they answer different questions, and only the blocked model is used for the paper's conclusions.
+
+The qualification factorial protocol evaluates standalone synthetic datasets (\tstr{}). The strengthened experiment separately reports real-plus-synthetic augmentation and does not pool the two regimes. AUPRC, calibration, minority geometry, exact-match, and membership-proxy measures are reported only for the strengthened run. Attribute inference, formal privacy guarantees, and external validation remain absent and are reported as limitations rather than estimated after the fact.

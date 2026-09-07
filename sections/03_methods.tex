@@ -1,0 +1,167 @@
+\section{Materials and Methods}
+\label{sec:methods}
+
+\alex{We need to add a paragraph that makes an introduction of this section! It is very important to give a overall view of section for readers!!! Beyond that, a introductory paragraph organizes the topics that will be described in this section.}\\
+
+\alex{Important note: we need to add an introductory paragraph for each of the following subsections to explain its purpose in these major sections; the title alone is not sufficient to do this.}
+
+\subsection{Datasets Definition and Description}
+\label{sec:datasets}
+
+\subsubsection{Vigitel health survey}
+
+Vigitel is Brazil's telephone-based surveillance system for risk and protective factors for chronic non-communicable diseases \citep{bernal2017}. The obesity experiments use a reproducible stratified sample of 5,000 rows drawn from a 2006--2023 extract, comprising 4,149 non-obese and 851 obese records (imbalance ratio approximately 4.9:1). The factorial experiment retains 15 predictors: age, sex, smoking, former smoking, physical inactivity, leisure-time physical activity, diabetes, hypertension, dyslipidaemia \alex{Would not it be ``\textit{dyslipidemia}''}, dietary indicators, fruit/vegetable regularity, and schooling. \alex{How many predictors are in the Vigitel dataset? Are all of them used? We need to emphasize this here.}
+
+\subsubsection{COVID-19 hospital mortality}
+
+The COVID-19 dataset contains 334 hospital records and 34 columns, including the binary target \texttt{obito} (death). The executed experiments report 251 survivors and 83 deaths, an imbalance ratio of approximately 3.0:1. Predictors include age, sex, alcohol and tobacco indicators, admission-reason groups, number of comorbidities, and specific conditions such as hypertension, heart failure, coronary disease, chronic respiratory disease, diabetes, chronic kidney disease, cancer, cirrhosis, and HIV.
+
+The small sample size and the clinical heterogeneity of the death class are scientifically important rather than incidental. A synthetic-selection method can appear to improve separability simply by concentrating on an artificially homogeneous subset of deaths, results on this dataset must therefore be interpreted with wide uncertainty and assessed strictly on held-out real folds.
+
+\alex{We need to include a paragraph that makes reference to Table 1 which summarizes the information about datasets!}
+
+\begin{table}[htbp]
+\centering
+\caption{Datasets used in the reported experiments. Counts are taken from executed repository outputs. \alex{This table should be referenced in the text!}}
+\label{tab:datasets}
+\begin{tabularx}{\textwidth}{lrrrX}
+\toprule
+Dataset & $n$ & Positive & Negative & Primary use\\
+\midrule
+Vigitel obesity sample & 5,000 & 851 & 4,149 & \sepa{} mechanism and augmentation experiments\\
+COVID-19 mortality & 334 & 83 & 251 & \sepa{} mechanism and augmentation experiments\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Preprocessing and Cross-validation Protocol}
+\label{sec:preprocessing}
+
+Binary variables are normalized to $\{0,1\}$, 1/2-coded survey fields are mapped deterministically. \alex{We need to add information about what is the type of cross-validation used before to do mention about the stratification of folds. For example: For the experiments, we use a 5-fold cross-validation.} Within each of five stratified folds, numerical missing values are median-imputed, binary fields use the modal category, and continuous variables are scaled \alex{how the continous variables are scaled? What is the type of scale used here?} using statistics fitted only on that fold's real training subset. CTGAN fitting, candidate scoring, selection, and classifier training all occur inside the fold, the corresponding held-out \alex{wouldn't it be ``hold-out'' instead ``held-out''? In general, it is more common to use ``hold-out''. We need to revise/replace the use of this terms in all text.} real fold is used only for evaluation.
+
+Every predictive result reported in Section~\ref{sec:results} uses this five-fold protocol. Within each factorial fold \alex{I think the word ``factorial'' should not be used here, the correct term is simply ``fold.''}, a single CTGAN model generates a candidate pool five times the real training size, and the same pool is scored under all four factorial selection regimes described in Section~\ref{sec:factorial} \alex{Note to me: Pay attention here!!!}. This pairing removes irrelevant generator-to-generator variation between conditions, but it also means that the five fold scores are not independent laboratory replications \alex{It is really need to use the term ``laboratory''?}, because the training folds overlap by 75\% and the four within-fold conditions share a candidate pool. We return to this limitation in Section~\ref{sec:stat-limitations} and report a blocked statistical analysis designed to account for it.
+
+We distinguish exploratory from confirmatory evidence throughout. All numerical claims in Sections~\ref{sec:results} and \ref{sec:discussion} come from executed five-fold notebooks \alex{I think that work ``\textit{notebook}'' it is not necessary here!} and their exported result tables; protocol-only, superseded single-split, or failed runs are not reported as evidence (see the reproducibility statement in Appendix \ref{app:audit}). Results from different evaluation regimes are not pooled: standalone synthetic substitution, real-plus-synthetic augmentation, and internal synthetic cross-validation answer different questions and are labeled separately below.
+
+\subsection{Evaluation Regimes}
+\label{sec:regimes}
+
+Three regimes are kept distinct throughout:
+\begin{description}[leftmargin=3.4cm,style=nextline]
+\item[\ra{} (TRTR):] \textit{train on four real folds and evaluate on the fifth real fold, this is the predictive reference.}
+\item[\sr{} (TSTR):] \textit{train only on synthetic records generated from a real training fold and test on the corresponding held-out real fold, this measures substitution utility.}
+\item[\rsr{}:] \textit{append synthetic minority records to the real training fold and test on held-out real data, this measures augmentation, not synthetic substitution.}
+\end{description}
+
+Macro-F1 is the endpoint of the completed qualification experiments because both outcome classes contribute equally to it. In the strengthened augmentation analysis, AUPRC is the prespecified primary endpoint. Secondary outcomes are Macro-F1, minority F1, minority precision and recall \alex{The term minority is not common in machine learning are, do you want to say ``micro'' in the sense of global metrics?}, AUROC, balanced accuracy, Brier score, and calibration intercept and slope. Values absent from an earlier export are not reconstructed after the fact \alex{I did not understand this phrase, can you explain it better?}.
+
+\subsection{Generators and Predictive Classifiers}
+\label{sec:generators}
+
+CTGAN \citep{xu2019} is the generator in the completed mechanism experiments. The strengthened augmentation analysis adds TVAE \citep{xu2019} to test whether the selection mechanism transfers beyond a GAN. Standard-generator and \sepa{} conditions share a candidate pool within a fold. Because SDV 1.17 \alex{we need to explain what is this, for instance, whether is this a version or library of to explain the acronym, that is, Synthetic Data Vault - SDV.} does not implement native conditional sampling for TVAE, TVAE is fitted directly to minority-fold feature records and the outcome label is assigned by design; this is reported separately from CTGAN's outcome-conditional sampling. Predictive models are logistic regression, random forest, CatBoost \citep{prokhorenkova2018}, and, in earlier analyses \alex{what is ``\textit{earlier analysis}''? what means it here?} only, XGBoost \citep{chen2016} and TabPFN \citep{hollmann2025}.
+
+\subsection{\sepa{} Selection Framework}
+\label{sec:sepaware}
+
+For real training data $\mathcal{D}_R$ and candidate pool $\mathcal{C}$, each candidate $(\tilde{x},\tilde{y})$ receives a composite score
+\begin{equation}
+S(\tilde{x},\tilde{y}) = R(\tilde{x}) + \lambda_{\mathrm{sep}}\,Sep(\tilde{x},\tilde{y}) + \lambda_{\mathrm{anchor}}\,A(\tilde{x},\tilde{y}),
+\label{eq:sepaware}
+\end{equation}
+where $R$ is one minus a robustly normalized nearest-real distance, $Sep$ averages a nearest-hit/nearest-miss margin and the assigned-label probability from a real-trained random forest, and $A$ averages compatibility with predeclared class-conditional anchor patterns. \alex{It was missing the definition of what lambda parameters are, that is, $\lambda_{sep}$ and $\lambda_{anchor}$!!!} Candidates are ranked within target class and selected to reproduce the real training-fold class counts, so improved \tstr{} performance cannot be attributed to a changed class ratio. 
+
+The fixed-$\lambda$ grid uses $\lambda_{\mathrm{sep}} \in \{0, 0.25, 0.5, 1\}$ and $\lambda_{\mathrm{anchor}} \in \{0, 0.25, 0.5\}$, because the best configuration on this grid is chosen using the same outcomes later used for reporting, grid results are treated as exploratory (Section~\ref{sec:fixed-lambda}). The subsequent factorial experiment instead predeclares two levels per factor, $\lambda_{\mathrm{sep}} \in \{0, 1\}$ and $\lambda_{\mathrm{anchor}} \in \{0, 0.5\}$, so that its conclusions do not depend on post-hoc selection.
+
+Figure~\ref{fig:sepaware_pipeline} summarizes the pipeline. CTGAN produces candidates but does not itself optimize the three selection criteria; a separate selector scores and ranks candidates within each class and returns the requested class counts. Separating generation from selection makes the intervention auditable and allows component-wise ablation, which is the basis of the factorial design in Section~\ref{sec:factorial}. The design rules out one simple alternative explanation -- that a \tstr{} change is caused by a different class ratio -- because class counts are held fixed across all compared conditions. It does not rule out harder alternatives: ranking can select unusually easy prototypes, discard boundary cases, or amplify a classifier-specific shortcut. These possibilities motivate the confirmatory analyses proposed in Section~\ref{sec:limitations}.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    node distance=0.55cm,
+    block/.style={rectangle, rounded corners, draw=black!60, fill=blue!7,
+        minimum width=1.75cm, minimum height=0.78cm, align=center, font=\scriptsize},
+    score/.style={rectangle, rounded corners, draw=black!60, fill=green!8,
+        minimum width=1.70cm, minimum height=0.58cm, align=center, font=\scriptsize},
+    arrow/.style={-{Latex[length=1.8mm]}, thick},
+    group/.style={rectangle, rounded corners, draw=black!35, dashed, inner sep=0.15cm}
+]
+\node[block] (real) {Real training\\data $\mathcal{D}_R$};
+\node[block, right=of real] (ctgan) {Fit\\CTGAN $G$};
+\node[block, right=of ctgan] (pool) {Candidate\\pool $\mathcal{C}$};
+
+\node[score, right=0.75cm of pool] (realism) {Realism $R$};
+\node[score, below=0.18cm of realism] (sep) {Separability $Sep$};
+\node[score, below=0.18cm of sep] (anchor) {Anchor $A$};
+\node[group, fit=(realism)(sep)(anchor), label={[font=\scriptsize]above:candidate scores}] (scores) {};
+
+\node[block, right=0.75cm of sep] (final) {Weighted\\score $S$};
+\node[block, right=of final] (select) {Within-class\\rank and select};
+\node[block, right=of select] (eval) {Train on synthetic,\\test on real fold};
+
+\draw[arrow] (real) -- (ctgan);
+\draw[arrow] (ctgan) -- (pool);
+\draw[arrow] (pool) -- (scores);
+\draw[arrow] (realism) -- (final);
+\draw[arrow] (sep) -- (final);
+\draw[arrow] (anchor) -- (final);
+\draw[arrow] (final) -- (select);
+\draw[arrow] (select) -- (eval);
+\end{tikzpicture}%
+}
+\caption{\sepa{} post-generation selection pipeline: every operation is fitted or computed using the real training portion of a cross-validation fold; the held-out real fold is used only for evaluation.}
+\label{fig:sepaware_pipeline}
+\end{figure}
+
+\subsection{Fidelity, Separability, and Privacy Proxies}
+\label{sec:proxies}
+
+Fidelity combines numerical-distribution similarity, categorical-proportion similarity, and correlation preservation into a single composite score. Separability is reported using cosine silhouette, a one-nearest-neighbor label-agreement index (SI), and hypothesis margin (HM). These are descriptive geometric measures: higher separation is not automatically clinically desirable, and we do not treat it as such (Section~\ref{sec:discussion}).
+
+The strengthened experiment measures held-out-real minority coverage as the mean distance from each positive test record to its nearest synthetic minority record after training-fold standardization. Minority diversity is the mean pairwise standardized distance among up to 1000 selected minority records. Exact overlap is the proportion of synthetic records with zero distance to a real training record. The membership proxy compares each real training and held-out record's distance to the nearest synthetic record and reports attack \alex{why use the word ``attack'' here?} AUROC. These are empirical diagnostics, not evidence of anonymity or a formal guarantee.
+
+\subsection{Domain-anchored Causal Plausibility Filtering}
+\label{sec:dacpf}
+
+\dacpf{} \alex{It is necessary to define the acronym!} generates minority-class CTGAN candidates and ranks their consistency with real minority distributions for domain anchors. The completed COVID-19 experiment compares no augmentation, standard CTGAN augmentation, age filtering, disease-anchor filtering, and combined filtering, evaluated as real-plus-synthetic augmentation (\rsr{}) rather than standalone synthetic substitution. We emphasise that \dacpf{} is a plausibility filter, not causal discovery or effect estimation: ``causal'' describes the clinical origin of the anchor hypotheses, not a claim that the filtering step identifies a causal effect.
+
+\subsection{Replicated $2^2$ factorial experiment}
+\label{sec:factorial}
+
+\alex{Would be interesting to add a paragraph to describe the type of factorial experiments beyond the title of this section and, hence, to add some referentes!}
+
+Let $A \in \{-1,+1\}$ encode separability pressure and $B \in \{-1,+1\}$ anchor pressure. The fold-level response is the classifier-averaged \tstr{} Macro-F1,
+\begin{equation}
+y_{ijk} = \mu + q_A A_i + q_B B_j + q_{AB} A_i B_j + \gamma_k + \varepsilon_{ijk},
+\label{eq:blocked}
+\end{equation}
+
+\alex{The equation is bit confusing, we should define each variable for factorial model equation, for example, we need to explain what is $i$, $j$, $k$, $q_A$, $A_i$, etc...}
+
+where $\gamma_k$ is a fixed fold block. The high-minus-low factorial effects are $2q_A$, $2q_B$, and $2q_{AB}$. Type-II ANOVA partitions sums of squares among factors, interaction, fold, and residual error; the primary variation percentages exclude the fold block from the denominator so that factor contributions are compared against experimental error rather than against total variation. An unblocked $2^2r$ decomposition that treats folds as replications is also reported in the supplementary material for comparison, but Equation~\ref{eq:blocked} is the more defensible model for paired cross-validation conditions and is used for all primary conclusions.
+
+Both raw and log-transformed responses are analysed. Residual normality is assessed using Shapiro--Wilk and Jarque--Bera tests \alex{include references!}, constant variance is assessed with median-centred Levene (Brown--Forsythe) \alex{include references!}, Fligner--Killeen \alex{include references!}, and Breusch--Pagan tests \alex{include references!}; Durbin--Watson and lag-one Ljung--Box statistics diagnose ordering-related serial patterns but cannot themselves establish independence \alex{include references!}. As noted in Section~\ref{sec:preprocessing}, five-fold training sets overlap by 75\% and the four conditions within a fold are paired, so inference from this design is treated as exploratory rather than as a formal, independently replicated hypothesis test (Section~\ref{sec:stat-limitations}).
+
+\subsection{Strengthened Augmentation Experiment}
+\label{sec:strengthened}
+
+The augmentation experiment uses three repeated five-fold stratified partitions and compares real-only training, random oversampling, random undersampling, SMOTE, class-weighted training, standard CTGAN, \sepa{} CTGAN, standard TVAE, and \sepa{} TVAE. Synthetic conditions add positive candidates until the real training fold is balanced, the held-out fold retains its natural prevalence. All missing-value imputation is fitted on the real training fold before resampling or generation. The \sepa{} augmentation score uses realism plus separability with a fixed unit separability weight, no held-out outcome is used to tune the setting.
+
+Logistic regression supplies a linear and calibration-sensitive reference, random forest supplies a nonlinear ensemble, and CatBoost supplies a strong tabular learner. Hyperparameters and the 0.5 classification threshold are held fixed across methods. Fold-level results are retained so generator comparisons can be paired within dataset, repeat \alex{Wouldn't it be better to use ``replications''??}, fold, and classifier. The current manuscript run uses three independently shuffled five-fold partitions with independent fold-specific generator seeds. These repetitions improve stability assessment but remain internal repetitions of the same two dataset samples rather than external validation.
+
+\subsection{Controlled Prevalence-by-overlap Experiment}
+\label{sec:controlled}
+
+A separate mechanism experiment varies class prevalence and overlap independently and is not counted as a third health dataset. We generated 2000-record, 15-feature binary-classification problems with 8 informative features, 3 redundant features, 2 clusters per class, and 2\% label noise. Prevalence was set to 5\%, 15\%, or 30\%, and the class separation to 0.4, 1.0, or 2.0, corresponding respectively to high, moderate, and low overlap. Each of the 9 cells used 10 independent data seeds and a stratified 70/30 train-test split.
+
+The comparison includes real-only training, random oversampling, SMOTE, and a SepAware-SMOTE condition. For the latter, SMOTE generates five times the number of required minority candidates, the selector ranks them by nearest-real realism, nearest-hit/nearest-miss margin, and random-forest label confidence, then selects enough records to balance the training data. Logistic regression and random forest are evaluated with AUPRC, Macro-F1, and minority F1 \alex{As previously mentioned, we need to check the term ``minority''.}. A heteroscedasticity-robust linear model tests method-by-overlap and method-by-prevalence interactions.
+
+\subsection{Ethical considerations}
+\label{sec:ethics}
+
+The Vigitel analysis uses a secondary survey extract and the COVID-19 analysis uses a de-identified institutional dataset supplied for the qualification research. The manuscript does not infer a new ethics approval number or consent determination. The authors must insert the applicable institutional review board or ethics committee name, protocol identifier, consent or waiver determination, and any access restrictions before submission.
+
+\subsection{Reproducibility}
+\label{sec:reproducibility-methods}
+
+The strengthened experiment was executed with Python 3.12, NumPy 1.26.4, pandas 2.2.2, scikit-learn 1.6.1, SDV 1.17.2, CatBoost 1.2.10, XGBoost 3.2.0, imbalanced-learn 0.12.3, and statsmodels 0.14.2. A project-local environment pins NumPy 1.26.4 because the available compiled scientific extensions were incompatible with NumPy 2. Full software-stack notes, executed-notebook identifiers, and artefact-status decisions are given in the code and data availability statement and in Appendix \ref{app:audit}.

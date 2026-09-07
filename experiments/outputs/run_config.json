@@ -1,0 +1,16 @@
+{
+  "mode": "full",
+  "datasets": [
+    "covid",
+    "vigitel"
+  ],
+  "seed": 42,
+  "splits": 5,
+  "repeats": 3,
+  "epochs": 30,
+  "pool_multiplier": 5,
+  "generators": [
+    "CTGAN",
+    "TVAE"
+  ]
+}
