@@ -1,12 +1,14 @@
 # JMIR SepAware manuscript package
 
-This directory is an Overleaf-ready authoring package for the initial two-dataset paper:
+This directory is the Overleaf-ready authoring package for the four-task paper:
 
-> Improving Rare-Outcome Prediction With Separability-Aware Synthetic Health Data: An Initial Two-Dataset Validation Study
+> Improving Rare-Outcome Prediction With Separability-Aware Synthetic Health Data: A Four-Task Validation Study
 
 ## Compile
 
 Upload the directory to Overleaf as a ZIP and set `main.tex` as the main document. The project uses standard TeX Live packages and BibTeX.
+
+If the Overleaf PDF still shows the old two-dataset title or `[Alex: ...]` annotations, Overleaf is compiling an older project or a different main document. Confirm that the project is synchronized to the latest `main` branch and that `main.tex` is selected under **Menu > Main document**. The smoking and kidney-mortality findings appear in Section 4.4, **Strengthened augmentation comparison across four tasks**, and Table 9. A ready-to-read compiled copy is stored at `output/pdf/Improving_Rare_Outcome_Prediction_With_Separability_Aware_Synthetic_Health_Data.pdf`.
 
 Local compilation used:
 
@@ -23,16 +25,16 @@ tectonic main.tex
 - `tables/`: manuscript-ready tables and tidy CSV summaries.
 - `experiments/PROTOCOL.md`: prospective strengthened-study decisions.
 - `experiments/AUDIT.md`: evidence, environment, and protocol audit.
-- `experiments/run_strengthened_experiments.py`: two-dataset augmentation analysis.
+- `experiments/run_strengthened_experiments.py`: four-task augmentation analysis.
 - `experiments/run_controlled_overlap_prevalence.py`: independent prevalence-by-overlap mechanism experiment.
 - `experiments/make_manuscript_outputs.py`: deterministic tables and figures.
 - `experiments/outputs/`: fold-level and summarized outputs.
 
-The readable experiment notebook is delivered separately under `output/jupyter-notebook/` in the workspace and can be copied into this directory before upload if desired.
+The executed experiment notebook is stored in `experiments/sepaware-vigitel-smoking-kidney-mortality.executed.ipynb`.
 
 ## Items the authors must complete
 
-The manuscript deliberately leaves explicit placeholders for information not available in the research folder:
+Information that requires author confirmation is tracked in `MANUSCRIPT_UNRESOLVED_COMMENTS.md` rather than displayed in the presentation PDF:
 
 - Full author list, degrees, affiliations, ORCIDs, and corresponding-author details.
 - Ethics committee or IRB name, approval/exemption number, consent or waiver, and compensation statement.
@@ -53,4 +55,4 @@ Do not remove these placeholders by guessing.
 - SepAware improves CTGAN modestly but does not improve TVAE in this run.
 - Improved CTGAN coverage accompanies lower minority diversity.
 - Exact-match and membership-proxy results are not a privacy guarantee.
-- Two health datasets constitute initial validation, not general clinical validation.
+- Four outcome tasks from three health-data sources broaden validation but do not establish general clinical validity.

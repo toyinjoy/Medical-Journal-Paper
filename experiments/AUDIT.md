@@ -4,14 +4,15 @@
 
 The draft in `Computer-Medicine-Paper/journal_manuscript` is a substantial manuscript, but it targets Computers in Biology and Medicine through `elsarticle`, not JMIR. It already contains an introduction, related work, methods, results, discussion, limitations, conclusion, declarations, and supplementary section. It will be used as a content source, not as the final journal package.
 
-## Executed evidence suitable for the initial paper
+## Executed evidence suitable for the four-task paper
 
-- Two datasets: a 5,000-record Vigitel obesity sample and a 334-record COVID-19 mortality cohort.
+- Four outcome tasks from three sources: 5,000-record Vigitel obesity and current-smoking samples, a 334-record COVID-19 mortality cohort, and a 5,000-patient kidney-cohort mortality sample.
 - Leakage-aware five-fold CTGAN/SepAware experiments with explicit TSTR labeling.
 - Fixed-lambda results for standard CTGAN and SepAware.
 - A replicated blocked 2x2 separability-by-anchor factorial analysis.
 - Exported fold-level classifier results, fidelity summaries, separability summaries, correlations, ANOVA allocations, and assumption diagnostics.
 - A separate COVID-19 real-plus-synthetic domain-anchor filtering experiment.
+- A repeated five-fold augmentation benchmark covering smoking and kidney mortality alongside the original tasks, with conventional baselines, CTGAN, TVAE, and SepAware variants.
 
 ## Key established findings
 
@@ -39,4 +40,3 @@ The draft in `Computer-Medicine-Paper/journal_manuscript` is a substantial manus
 ## Environment finding
 
 The pre-existing Anaconda environment paired NumPy 2.2.6 with extensions compiled against NumPy 1.x, causing pandas, scikit-learn, SDV, CatBoost, and plotting imports to fail. A project-local `.venv-jmir` environment was created with NumPy 1.26.4 layered over the existing packages. No global package was changed.
-

@@ -1,4 +1,4 @@
-# SepAware two-dataset JMIR protocol
+# SepAware four-task JMIR protocol
 
 Version: 0.1 (prospective extension of the completed qualification experiments)
 
@@ -88,6 +88,6 @@ SepAware is considered supported for a dataset only if it improves held-out-real
 
 - Separate TSTR, real-plus-synthetic augmentation, and real-only evaluation throughout.
 - Label the varied-lambda qualification grid exploratory.
-- Label the two-dataset extension initial validation.
+- Describe the design as four outcome tasks from three data sources; do not imply four independent clinical cohorts.
 - Do not claim privacy preservation from duplicate checks alone.
 - Do not claim clinical phenotype preservation without an externally justified phenotype definition.

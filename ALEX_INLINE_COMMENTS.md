@@ -2,6 +2,8 @@
 
 Extracted before removing the `\alex{...}` annotations from the TeX source.
 
+Resolution status (September 17, 2026): all 66 annotations have been reviewed. Actionable requests were incorporated into the clean manuscript, including additional citations, explicit research questions, a clearer research gap and objective, an objective results preview, four-task contributions, paper organization, a related-work comparison table, cross-validation and scaling details, SDV and DACPF definitions, lambda definitions, a fully defined factorial model, and citations for statistical diagnostics. Suggestions that were not adopted literally were handled editorially: “held-out” is retained as the standard adjective; “positive class” is used where it improves accessibility while “minority class” remains where it is the established technical term; and folds are described as dependent repeated partitions rather than independent replications. The original comments remain below for audit purposes only and no longer appear in the TeX or PDF.
+
 ## 1. sections/01_introduction.tex, former line 4
 
 It is necessary to add some references.
