@@ -1,7 +1,7 @@
 \section{Limitations}
 \label{sec:limitations}
 
-Only two health datasets were available. They differ substantially in size and outcome context, which makes the contrast informative, but two datasets cannot identify a general relationship between intrinsic overlap and SepAware benefit. The current paper should therefore be read as an initial multidataset validation with a controlled mechanism experiment. Additional health datasets with independently observed overlap, prevalence, sample size, and minority heterogeneity are required.
+Four outcome tasks from three health-data sources were evaluated. This broadens the observed prevalence and outcome contexts but does not identify a general relationship between intrinsic overlap and SepAware benefit; the two Vigitel tasks are not independent sources. The study should therefore be read as an initial multitask validation with a controlled mechanism experiment.
 
 The strongest Vigitel factorial finding comes from one 5000-record sample, one cross-validation partition, one CTGAN configuration, and shared within-fold candidate pools. The strengthened experiment uses three repeated five-fold partitions and 30 training epochs for computational feasibility. Fold-specific generator seeds avoid reusing a single fitted generator, and repeated shuffles measure some partition variability, but all repetitions still reuse the same two source samples. More generator seeds, higher-capacity sensitivity runs, and independent datasets are necessary before formal confirmatory claims.
 
@@ -13,6 +13,6 @@ Minority coverage and diversity are geometric proxies rather than clinically val
 
 The privacy analysis is limited to exact matches, nearest-record distances, and a membership proxy. It does not include attribute inference, shadow-model membership attacks, linkage attacks, or a formal differential-privacy guarantee. No synthetic data release should be justified from the present privacy results.
 
-Finally, external or temporal validation is absent. Vigitel spans multiple survey years, but the current evaluation is not a prospective temporal split. The COVID-19 cohort is small and institution-specific. At least one temporal or cross-site evaluation is needed to establish robustness under distribution shift.
+Finally, external or temporal validation is absent. The smoking file contains no survey-year field, the obesity evaluation is not a prospective temporal split, and the COVID-19 cohort is institution-specific. Kidney mortality uses a longitudinal landmark but random patient partitions rather than a calendar-time split. At least one temporal or cross-site evaluation is needed.
 
-These limitations define the next additions to the manuscript: 2--4 further health datasets, repeated partition and generator seeds, a native conditional third generator, expert-informed minority coverage, stronger privacy attacks, and external or temporal validation. If SepAware fails under some of these conditions, those failures should be reported as operational guidance about when separability control should not be used.
+These limitations define the next additions: a native conditional third generator, multiple generator seeds per fold, expert-informed minority coverage, stronger privacy attacks, formal overlap-to-benefit modeling, and external or temporal validation. Failures should continue to be reported as operational guidance about when separability control should not be used.

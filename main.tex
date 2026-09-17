@@ -30,15 +30,10 @@
 \newcommand{\rsr}{Real+Synthetic$\rightarrow$Real}
 \newcommand{\NA}{--}
 
-\newcommand{\review}[1]{{\textbf{\color{red}{#1}}}}
-\newcommand{\alex}[1]{{\color{red}[Alex: #1]}}
-
-
-
-\title{Improving Rare-Outcome Prediction With Separability-Aware Synthetic Health Data: An Initial Two-Dataset Validation Study}
+\title{Improving Rare-Outcome Prediction With Separability-Aware Synthetic Health Data: A Four-Task Validation Study}
 \author{Oluwatoyin Joy Omole$^{1}$\\
 \small $^{1}$Graduate Program in Computer Science, Universidade Federal de Minas Gerais, Belo Horizonte, Brazil\\
-\small Author list, degrees, ORCIDs, and corresponding-author details to be confirmed}
+\small Corresponding-author details are tracked in the separate submission checklist}
 \date{}
 
 \begin{document}
@@ -49,11 +44,11 @@
 
 \textbf{Objective:} This study asks when controlling class separability improves the held-out-real utility of synthetic health data beyond class-frequency correction and whether utility gains are accompanied by loss of minority coverage.
 
-\textbf{Methods:} We developed \sepa{}, a post-generation mechanism that selects records from an oversized candidate pool using realism and label-consistent geometric evidence while preserving a prespecified class count. Initial validation used a 5000-record sample of Brazil's Vigitel obesity survey and a 334-record COVID-19 hospital-mortality cohort. Completed analyses include leakage-controlled 5-fold synthetic-to-real evaluation and a blocked $2\times2$ factorial experiment separating separability and anchor pressures. A strengthened augmentation analysis compares real-only training, random sampling, SMOTE, class weighting, conditional tabular generative adversarial networks, tabular variational autoencoders, and their \sepa{}-selected variants. Evaluation includes discrimination, minority-specific performance, calibration, class-conditional coverage, and empirical privacy-risk proxies. A controlled simulation independently varies prevalence and overlap.
+\textbf{Methods:} We developed \sepa{}, a post-generation mechanism that selects records from an oversized candidate pool using realism and label-consistent geometric evidence while preserving a prespecified class count. Validation uses four outcome tasks from three health-data sources: Vigitel obesity, COVID-19 hospital mortality, Vigitel current smoking, and landmark-defined 365-day kidney-cohort mortality. Completed analyses include leakage-controlled 5-fold synthetic-to-real evaluation and a blocked $2\times2$ factorial mechanism experiment. A strengthened augmentation analysis uses three repeated 5-fold partitions and compares real-only training, random sampling, SMOTE, class weighting, conditional tabular generative adversarial networks, tabular variational autoencoders, and their \sepa{}-selected variants. Evaluation includes discrimination, minority-specific performance, calibration, class-conditional coverage, and empirical privacy-risk proxies. A controlled simulation independently varies prevalence and overlap.
 
-\textbf{Results:} In the synthetic-to-real experiment, Vigitel Macro-F1 increased from 0.459 with standard conditional tabular generative adversarial network data to 0.583 with \sepa{}. Separability accounted for 96.00\% of treatment-plus-error variation in the Vigitel factorial analysis ($P<.001$). COVID-19 results were less stable: standard generation achieved 0.463 and the fixed balanced \sepa{} setting achieved 0.549 with wider uncertainty; separability accounted for 5.13\% of variation and residual error for 81.53\%. Across three repeated five-fold partitions in the strengthened augmentation analysis, \sepa{} improved mean AUPRC over standard CTGAN by 0.015 on COVID-19 and 0.013 on Vigitel, but did not improve TVAE. Simple resampling or class weighting matched or exceeded generator-based approaches on most dataset--metric combinations. \sepa{} CTGAN improved nearest-minority coverage while reducing minority diversity. Controlled SepAware-SMOTE gains were small and its overlap and prevalence interactions were not significant.
+\textbf{Results:} In the synthetic-to-real experiment, Vigitel Macro-F1 increased from 0.459 with standard conditional tabular generative adversarial network data to 0.583 with \sepa{}, and separability accounted for 96.00\% of treatment-plus-error variation ($P<.001$). In the strengthened analysis, \sepa{} improved mean AUPRC over standard CTGAN by 0.015 on COVID-19, 0.013 on Vigitel obesity, and 0.037 on Vigitel smoking, but by only 0.0003 on kidney mortality. It was inconsistent for TVAE and did not generally exceed real-only training or simple rebalancing. Selection improved nearest-minority coverage while reducing diversity, including for kidney mortality where no meaningful utility gain appeared. Controlled SepAware-SMOTE gains were small and its overlap and prevalence interactions were not significant.
 
-\textbf{Conclusions:} Initial evidence indicates that class-boundary control is distinct from class balancing and can materially improve synthetic-to-real transfer in some settings. The contrasting datasets also show why SepAware should not be treated as universally beneficial: apparent gains must be tested against uncertainty, calibration, minority coverage, and the possibility that selection merely removes difficult but valid cases.
+\textbf{Conclusions:} Class-boundary control is distinct from class balancing and can improve some candidate pools, but it is not universally beneficial. The kidney-mortality null result and repeated diversity losses show that apparent gains must be tested against simple baselines, calibration, minority coverage, and the possibility that selection merely removes difficult but valid cases.
 \end{abstract}
 
 \noindent\textbf{Keywords:} synthetic health data; tabular data; class imbalance; class overlap; rare outcomes; data augmentation; privacy; calibration

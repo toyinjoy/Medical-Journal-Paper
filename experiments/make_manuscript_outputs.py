@@ -26,13 +26,16 @@ agg.to_csv(TABLE / "strengthened_augmentation_summary.csv", index=False)
 order = ["Real only", "Random oversampling", "Random undersampling", "SMOTE", "Class weighting",
          "Standard CTGAN", "SepAware CTGAN", "Standard TVAE", "SepAware TVAE"]
 lines = ["\\begin{tabular}{llrrrr}", "\\toprule", "Dataset & Method & AUPRC & Macro-F1 & Minority F1 & Brier \\\\", "\\midrule"]
-for dataset in ["COVID-19", "Vigitel"]:
+# The manuscript's compact table reports the two new external tasks; the
+# complete four-task results remain available in the accompanying CSV.
+dataset_order = ["Vigitel smoking", "Kidney mortality"]
+for dataset_index, dataset in enumerate(dataset_order):
     subset = agg[agg.dataset == dataset].set_index("condition")
     for i, condition in enumerate(order):
         row = subset.loc[condition]
         label = dataset if i == 0 else ""
         lines.append(f"{label} & {condition} & {row.auprc:.3f} & {row.macro_f1:.3f} & {row.minority_f1:.3f} & {row.brier:.3f} \\\\")
-    if dataset == "COVID-19":
+    if dataset_index < len(dataset_order) - 1:
         lines.append("\\midrule")
 lines.extend(["\\bottomrule", "\\end{tabular}"])
 (TABLE / "strengthened_augmentation_summary.tex").write_text("\n".join(lines))

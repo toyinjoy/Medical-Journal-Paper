@@ -174,16 +174,18 @@ Vigitel & log & .8625 & .7463 & .6834 & .0237 & variance flag\\
 
 Normality tests do not reject for either dataset. Vigitel's groupwise robust variance tests (Brown--Forsythe, Fligner--Killeen) do not reject equal variance, but Breusch--Pagan does, and the log transform does not resolve this conflict. More importantly, independence is not established, because the cross-validation training sets overlap and the four conditions within each fold share a candidate pool. The very small Vigitel residual should therefore be confirmed across independent generator and partition seeds before it is treated as a stable population effect (Section~\ref{sec:stat-limitations}).
 
-\subsection{Strengthened augmentation comparison}
+\subsection{Strengthened augmentation comparison across four tasks}
 \label{sec:strengthened-results}
 
 The practical augmentation analysis gives a more restrained result than the synthetic-to-real factorial experiment (Table~\ref{tab:strengthened}). Across three repeated partitions and three classifiers, \sepa{} CTGAN produced the highest COVID-19 Macro-F1 (0.541), followed by random oversampling (0.535) and class weighting (0.533). Random oversampling produced the highest Vigitel Macro-F1 (0.575), approximately equal to class weighting (0.574). Vigitel AUPRC was highest for real-only training (0.288) and class weighting (0.287); COVID-19 AUPRC was similar for random oversampling (0.357), \sepa{} CTGAN (0.354), and real-only training (0.354).
 
-Within-generator paired comparisons were directionally favorable for CTGAN but not TVAE. Relative to standard CTGAN, \sepa{} increased mean AUPRC by 0.015 on COVID-19 and 0.013 on Vigitel; corresponding Macro-F1 differences were 0.033 and 0.019. Relative to standard TVAE, \sepa{} changed AUPRC by $-0.015$ on COVID-19 and $-0.001$ on Vigitel and did not improve Macro-F1. The post-generation mechanism therefore transferred across the two datasets for CTGAN in this run, but not across generator families.
+Within-generator paired comparisons are favorable for CTGAN on three tasks but not the fourth. Relative to standard CTGAN, \sepa{} increases mean AUPRC by 0.015 on COVID-19, 0.013 on Vigitel obesity, and 0.037 on Vigitel smoking; corresponding Macro-F1 differences are 0.033, 0.019, and 0.038. Kidney mortality is effectively unchanged (AUPRC difference 0.0003; Macro-F1 difference $-0.002$). TVAE differences are inconsistent: $-0.015$, $-0.001$, 0.007, and $-0.0006$ AUPRC for COVID-19, Vigitel obesity, Vigitel smoking, and kidney mortality, respectively.
+
+For Vigitel smoking, real-only training gives the highest AUPRC (0.299), whereas random oversampling gives the highest Macro-F1 (0.582). For kidney mortality, real-only training gives the highest AUPRC (0.121), followed by random undersampling (0.118). Real-only kidney models have zero mean minority recall at the default 0.5 threshold, while random undersampling raises recall to 0.620 but worsens the Brier score from 0.050 to 0.225. Thus ranking, thresholded sensitivity, and calibration lead to different operational conclusions.
 
 \begin{table}[htbp]
 \centering
-\caption{Held-out-real augmentation performance averaged across 3 repeated partitions, 5 folds, and 3 classifiers. AUPRC was the prespecified primary endpoint of the strengthened analysis.}
+\caption{Held-out-real augmentation performance for the two new tasks, averaged across 3 repeated partitions, 5 folds, and 3 classifiers. AUPRC was the prespecified primary endpoint.}
 \label{tab:strengthened}
 % \resizebox{\textwidth}{!}{
 \input{tables/strengthened_augmentation_summary.tex}
@@ -197,7 +199,7 @@ Within-generator paired comparisons were directionally favorable for CTGAN but n
 \label{fig:strengthened-auprc}
 \end{figure}
 
-The structural diagnostics reveal the trade-off behind the CTGAN improvement. \sepa{} reduced the mean distance from held-out real minority records to their closest synthetic minority record (COVID-19, 4.30 vs 4.44; Vigitel, 1.71 vs 1.99), indicating improved nearest-record coverage. At the same time, mean within-minority diversity declined (COVID-19, 7.17 vs 11.12; Vigitel, 4.33 vs 5.55). No exact standardized matches were observed. Membership-proxy AUROC remained close to chance, ranging from 0.50 to 0.52, but this limited proxy is not a privacy guarantee. TVAE minority diversity was especially low and \sepa{} did not improve its predictive utility, consistent with a class-conditional mode-concentration failure.
+The structural diagnostics reveal the trade-off behind selection. For Vigitel smoking, \sepa{} CTGAN improves minority coverage distance from 3.81 to 3.62 but reduces diversity from 7.36 to 6.13. For kidney mortality, coverage improves from 1.74 to 1.65 while diversity falls from 6.91 to 4.09, without meaningful AUPRC improvement. Membership-proxy AUROC remains close to chance. Exact standardized matches are absent for smoking and rare for kidney mortality (0.006\% for \sepa{} CTGAN), but these diagnostics do not establish anonymity.
 
 These results do not support the claim that increasing synthetic separability is generally better. They support a narrower conclusion: within CTGAN candidate pools, separability-aware selection can yield a small average improvement and closer minority coverage, but the gain may come with reduced diversity and can be dominated by simpler frequency-correction methods.
 
@@ -220,4 +222,4 @@ In the pooled robust regression including both classifiers, neither the SepAware
 
 The experiments form a coherent progression. Rebalancing and unconstrained augmentation did not make utility reliably high; domain filters sometimes helped but did not behave monotonically; diagnostic analyses implicated class overlap; \sepa{} then improved Vigitel \tstr{} performance while measured composite fidelity remained broadly stable; and the factorial study attributed that gain to separability rather than to anchors. The COVID-19 null result is equally informative: explicit separability pressure is not sufficient when the positive class is small, heterogeneous, or weakly represented.
 
-The strengthened augmentation results qualify that progression. CTGAN selection improves average AUPRC modestly on both datasets, but random oversampling is highly competitive, TVAE selection does not improve performance, and the CTGAN coverage gain accompanies lower minority diversity. The evidence therefore does not show that \sepa{} recovers clinically meaningful signal. An equally consistent explanation is that it concentrates on easier observations. We treat these as central boundary conditions rather than incidental caveats.
+The strengthened augmentation results qualify that progression. CTGAN selection improves average AUPRC on COVID-19 and both Vigitel tasks but not kidney mortality; random oversampling remains highly competitive, and TVAE selection is inconsistent. Coverage gains repeatedly accompany lower minority diversity. The evidence therefore does not show that \sepa{} universally recovers clinically meaningful signal; it may instead concentrate easier observations.

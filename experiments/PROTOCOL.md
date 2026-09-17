@@ -8,8 +8,8 @@ Estimate when class-separability-aware selection improves rare-outcome predictio
 
 ## Scope
 
-- Datasets: Vigitel obesity and COVID-19 hospital mortality.
-- Current status: an initial two-dataset validation study. Results are not presented as universal or externally validated.
+- Dataset-outcome tasks: Vigitel obesity, COVID-19 hospital mortality, Vigitel current smoking, and 365-day kidney-cohort mortality.
+- Current status: a four-task validation study from three underlying data sources. Results are not presented as universal or externally validated, and the two Vigitel tasks are not treated as independent sources.
 - Confirmatory endpoint: held-out-real-data AUPRC under the real-plus-synthetic augmentation regime.
 - Key secondary endpoints: Macro-F1, minority F1, sensitivity, precision, AUROC, balanced accuracy, Brier score, and calibration slope/intercept.
 - Existing synthetic-to-real factorial results remain a separate component-attribution analysis and are not pooled with augmentation results.
@@ -21,6 +21,9 @@ Estimate when class-separability-aware selection improves rare-outcome predictio
 - Generator seed is varied independently within each partition/fold.
 - All methods within a partition/fold share the same held-out real observations.
 - Vigitel uses the qualification's reproducible 5,000-record stratified sample; COVID-19 uses all eligible records.
+- Vigitel smoking uses a reproducible 5,000-record stratified sample from `samples.pkl`; identifiers, cluster labels, and `color` are excluded.
+- Kidney mortality uses a 365-day landmark after first recorded activity, a subsequent 365-day death horizon, and only patients with a recorded death in-horizon or observable activity through the horizon. Features are counts computed strictly before the landmark. Patients who died before the landmark are excluded. A reproducible stratified sample of 5,000 eligible patients is used for computational comparability.
+- Dialysis is not an outcome in this study. Pre-landmark dialysis counts may be used as mortality predictors because they would be observable at prediction time.
 
 ## Methods
 

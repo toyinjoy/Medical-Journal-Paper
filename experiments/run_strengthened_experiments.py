@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Strengthened two-dataset SepAware experiment.
+"""Strengthened multi-dataset SepAware experiment.
 
 The script keeps learned preprocessing inside each training fold, shares each
 generator candidate pool between its standard and SepAware conditions, and
@@ -9,6 +9,7 @@ exports fold-level results for manuscript tables and figures.
 from __future__ import annotations
 
 import argparse
+import gc
 import json
 import os
 import random
@@ -70,6 +71,21 @@ VIGITEL_FEATURES = [
     "years_schooling",
 ]
 
+VIGITEL_SMOKING_FEATURES = [
+    "SANEAMENTO", "SOCIO_ECON", "alcabu", "q6", "civil", "q35", "q47", "q70",
+    "adultos", "af", "q7", "hortareg", "sucodia", "flvreco", "atiocu", "freq",
+    "cruadia", "atidom", "frutareg", "diab", "atitrans", "tv_d_3", "hart",
+    "saruim", "cozidadi_cozidadia", "sofrutad_sofrutadia", "q8_anos",
+]
+
+KIDNEY_MORTALITY_FEATURES = [
+    "baseline_event_count", "baseline_unique_event_count", "baseline_active_days",
+    "diagnosis_count", "medication_count", "dialysis_hd_count", "dialysis_dp_count",
+    "diag_n180_count", "diag_n189_count", "diag_n188_count", "transplant_z940_count",
+    "transplant_event_count", "vascular_access_count", "hospitalization_count",
+    "erythropoietin_count",
+]
+
 
 @dataclass(frozen=True)
 class DatasetSpec:
@@ -86,6 +102,14 @@ SPECS = {
     "vigitel": DatasetSpec(
         "Vigitel", ROOT / "vigitel2006_2023_obesidade_exclusoes.parquet", "obesity",
         ("obesity", "desfecho", "obesidade", "obeso"), tuple(VIGITEL_FEATURES), 5000,
+    ),
+    "vigitel_smoking": DatasetSpec(
+        "Vigitel smoking", ROOT / "Vigitel_Dataset" / "samples.pkl", "fumante",
+        ("fumante",), tuple(VIGITEL_SMOKING_FEATURES), 5000,
+    ),
+    "kidney_mortality": DatasetSpec(
+        "Kidney mortality", ROOT / "tidy_event_data.feather", "death_365d",
+        ("death_365d",), tuple(KIDNEY_MORTALITY_FEATURES), 5000,
     ),
 }
 
@@ -118,9 +142,62 @@ def _binary_12(series: pd.Series) -> pd.Series:
     return numeric
 
 
+def build_kidney_mortality_landmark(path: Path) -> pd.DataFrame:
+    """Build a 365-day baseline/365-day mortality cohort without post-index leakage."""
+    events = pd.read_feather(path, columns=["date", "patient_id", "event"])
+    events["date"] = pd.to_datetime(events["date"])
+    spans = events.groupby("patient_id")["date"].agg(first_date="min", last_date="max")
+    spans["index_date"] = spans["first_date"] + pd.Timedelta(days=365)
+    spans["horizon_end"] = spans["index_date"] + pd.Timedelta(days=365)
+    deaths = events.loc[events["event"].eq("DEATH")].groupby("patient_id")["date"].min().rename("death_date")
+    spans = spans.join(deaths)
+    spans["death_365d"] = (
+        spans["death_date"].gt(spans["index_date"])
+        & spans["death_date"].le(spans["horizon_end"])
+    )
+    eligible = (
+        (spans["last_date"].ge(spans["horizon_end"]) | spans["death_365d"])
+        & (spans["death_date"].isna() | spans["death_date"].gt(spans["index_date"]))
+    )
+    spans = spans.loc[eligible].copy()
+
+    baseline = events.merge(spans[["index_date"]], left_on="patient_id", right_index=True, how="inner")
+    baseline = baseline.loc[baseline["date"].lt(baseline["index_date"]) & ~baseline["event"].eq("DEATH")].copy()
+    code = baseline["event"].astype(str)
+    flags = {
+        "diagnosis_count": code.str.startswith("DIAGN_"),
+        "medication_count": code.str.contains("MED_", case=False, regex=False),
+        "dialysis_hd_count": code.eq("EVENT_C1DIALISE_HD"),
+        "dialysis_dp_count": code.eq("EVENT_C1DIALISE_DP"),
+        "diag_n180_count": code.eq("DIAGN_N180"),
+        "diag_n189_count": code.eq("DIAGN_N189"),
+        "diag_n188_count": code.eq("DIAGN_N188"),
+        "transplant_z940_count": code.eq("DIAGN_Z940"),
+        "transplant_event_count": code.str.contains("TX_", case=False, regex=False),
+        "vascular_access_count": code.str.contains("ACESSO_", case=False, regex=False),
+        "hospitalization_count": code.str.contains("INTERNA", case=False, regex=False),
+        "erythropoietin_count": code.eq("EVENT_c2MED_ERITRO"),
+    }
+    feature_parts = [
+        baseline.groupby("patient_id").size().rename("baseline_event_count"),
+        baseline.groupby("patient_id")["event"].nunique().rename("baseline_unique_event_count"),
+        baseline.groupby("patient_id")["date"].nunique().rename("baseline_active_days"),
+    ]
+    for name, mask in flags.items():
+        feature_parts.append(mask.groupby(baseline["patient_id"]).sum().rename(name))
+    cohort = pd.concat(feature_parts, axis=1).reindex(spans.index).fillna(0)
+    cohort["death_365d"] = spans["death_365d"].astype(int)
+    return cohort.reset_index(drop=True)
+
+
 def load_dataset(key: str, seed: int = 42) -> tuple[pd.DataFrame, list[str], str]:
     spec = SPECS[key]
-    frame = pd.read_excel(spec.path) if spec.path.suffix == ".xlsx" else pd.read_parquet(spec.path)
+    if key == "vigitel_smoking":
+        frame = pd.DataFrame(pd.read_pickle(spec.path))
+    elif key == "kidney_mortality":
+        frame = build_kidney_mortality_landmark(spec.path)
+    else:
+        frame = pd.read_excel(spec.path) if spec.path.suffix == ".xlsx" else pd.read_parquet(spec.path)
     found = next((candidate for candidate in spec.target_candidates if candidate in frame.columns), None)
     if found is None:
         raise KeyError(f"Target not found for {key}: {spec.target_candidates}")
@@ -173,7 +250,7 @@ def make_models(seed: int, weighted: bool = False):
             ("model", LogisticRegression(max_iter=2000, class_weight=weight, random_state=seed)),
         ]),
         "RandomForest": RandomForestClassifier(
-            n_estimators=300, min_samples_leaf=3, class_weight=weight, random_state=seed, n_jobs=-1
+            n_estimators=300, min_samples_leaf=3, class_weight=weight, random_state=seed, n_jobs=1
         ),
         "CatBoost": CatBoostClassifier(
             iterations=300, depth=4, learning_rate=0.05, loss_function="Logloss",
@@ -305,7 +382,7 @@ def score_candidates(pool: pd.DataFrame, real_train: pd.DataFrame, features: lis
         same_distance[idx] = same.kneighbors(candidate_x[idx], return_distance=True)[0].ravel()
         opposite_distance[idx] = opposite.kneighbors(candidate_x[idx], return_distance=True)[0].ravel()
     boundary = RandomForestClassifier(
-        n_estimators=300, min_samples_leaf=3, class_weight="balanced", random_state=seed, n_jobs=-1
+        n_estimators=300, min_samples_leaf=3, class_weight="balanced", random_state=seed, n_jobs=1
     ).fit(real_train[features], real_y)
     probability = boundary.predict_proba(pool[features])
     confidence = probability[np.arange(len(pool)), candidate_y]
@@ -359,13 +436,25 @@ def structure_privacy_metrics(real_train, real_test, synthetic, features, target
     }
 
 
-def run_dataset(key: str, splits: int, repeats: int, epochs: int, pool_multiplier: int, generators: list[str], seed: int):
+def run_dataset(key: str, splits: int, repeats: int, epochs: int, pool_multiplier: int, generators: list[str], seed: int,
+                resume_predictions: pd.DataFrame | None = None, resume_diagnostics: pd.DataFrame | None = None):
     raw, features, target = load_dataset(key, seed)
     splitter = RepeatedStratifiedKFold(n_splits=splits, n_repeats=repeats, random_state=seed)
-    prediction_rows, diagnostic_rows = [], []
+    dataset_name = SPECS[key].name
+    prior_pred = resume_predictions if resume_predictions is not None else pd.DataFrame()
+    prior_diag = resume_diagnostics if resume_diagnostics is not None else pd.DataFrame()
+    if not prior_pred.empty:
+        prior_pred = prior_pred.loc[prior_pred["dataset"].eq(dataset_name)].copy()
+    if not prior_diag.empty:
+        prior_diag = prior_diag.loc[prior_diag["dataset"].eq(dataset_name)].copy()
+    prediction_rows = prior_pred.to_dict("records") if not prior_pred.empty else []
+    diagnostic_rows = prior_diag.to_dict("records") if not prior_diag.empty else []
     for split_index, (train_idx, test_idx) in enumerate(splitter.split(raw, raw[target])):
         repeat = split_index // splits
         fold = split_index % splits
+        if not prior_pred.empty and len(prior_pred.loc[(prior_pred["repeat"] == repeat) & (prior_pred["fold"] == fold)]) == 27:
+            print(json.dumps({"dataset": key, "repeat": repeat, "fold": fold, "status": "resumed"}), flush=True)
+            continue
         fold_seed = seed + repeat * 1000 + fold * 37
         raw_train, raw_test = raw.iloc[train_idx].copy(), raw.iloc[test_idx].copy()
         imputer, _ = fit_fold_imputer(raw_train, features)
@@ -426,6 +515,8 @@ def run_dataset(key: str, splits: int, repeats: int, epochs: int, pool_multiplie
         pd.DataFrame(prediction_rows).to_csv(OUT / "predictive_metrics_checkpoint.csv", index=False)
         pd.DataFrame(diagnostic_rows).to_csv(OUT / "synthetic_diagnostics_checkpoint.csv", index=False)
         print(json.dumps({"dataset": key, "repeat": repeat, "fold": fold, "conditions": len(datasets)}), flush=True)
+        del datasets
+        gc.collect()
     return prediction_rows, diagnostic_rows
 
 
@@ -451,6 +542,8 @@ def main():
     parser.add_argument("--splits", type=int)
     parser.add_argument("--repeats", type=int)
     parser.add_argument("--epochs", type=int)
+    parser.add_argument("--append-existing", action="store_true", help="Preserve completed results for datasets not rerun")
+    parser.add_argument("--resume", action="store_true", help="Resume complete folds from checkpoint files")
     args = parser.parse_args()
     if args.mode == "smoke":
         splits, repeats, epochs, multiplier, generators = 2, 1, 2, 2, ["TVAE"]
@@ -461,13 +554,25 @@ def main():
     epochs = args.epochs or epochs
     config = vars(args) | {"splits": splits, "repeats": repeats, "epochs": epochs, "pool_multiplier": multiplier, "generators": generators}
     (OUT / "run_config.json").write_text(json.dumps(config, indent=2))
+    existing_predictions = pd.read_csv(OUT / "predictive_metrics_long.csv") if args.append_existing and (OUT / "predictive_metrics_long.csv").exists() else pd.DataFrame()
+    existing_diagnostics = pd.read_csv(OUT / "synthetic_diagnostics_long.csv") if args.append_existing and (OUT / "synthetic_diagnostics_long.csv").exists() else pd.DataFrame()
+    rerun_names = {SPECS[key].name for key in args.datasets}
+    if not existing_predictions.empty:
+        existing_predictions = existing_predictions.loc[~existing_predictions["dataset"].isin(rerun_names)]
+    if not existing_diagnostics.empty:
+        existing_diagnostics = existing_diagnostics.loc[~existing_diagnostics["dataset"].isin(rerun_names)]
     prediction_rows, diagnostic_rows = [], []
+    resume_predictions = pd.read_csv(OUT / "predictive_metrics_checkpoint.csv") if args.resume and (OUT / "predictive_metrics_checkpoint.csv").exists() else pd.DataFrame()
+    resume_diagnostics = pd.read_csv(OUT / "synthetic_diagnostics_checkpoint.csv") if args.resume and (OUT / "synthetic_diagnostics_checkpoint.csv").exists() else pd.DataFrame()
     for dataset in args.datasets:
-        pred, diag = run_dataset(dataset, splits, repeats, epochs, multiplier, generators, args.seed)
+        pred, diag = run_dataset(
+            dataset, splits, repeats, epochs, multiplier, generators, args.seed,
+            resume_predictions=resume_predictions, resume_diagnostics=resume_diagnostics,
+        )
         prediction_rows.extend(pred)
         diagnostic_rows.extend(diag)
-    predictions = pd.DataFrame(prediction_rows)
-    diagnostics = pd.DataFrame(diagnostic_rows)
+    predictions = pd.concat([existing_predictions, pd.DataFrame(prediction_rows)], ignore_index=True)
+    diagnostics = pd.concat([existing_diagnostics, pd.DataFrame(diagnostic_rows)], ignore_index=True)
     predictions.to_csv(OUT / "predictive_metrics_long.csv", index=False)
     diagnostics.to_csv(OUT / "synthetic_diagnostics_long.csv", index=False)
     summarize(predictions, ["auprc", "macro_f1", "minority_f1", "minority_recall", "auroc", "brier"]).to_csv(

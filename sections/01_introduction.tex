@@ -1,34 +1,28 @@
 \section{Introduction}
 \label{sec:introduction}
 
-Health datasets combine sensitive information, mixed numerical and categorical variables, missingness, and outcomes that are often uncommon but clinically consequential \alex{It is necessary to add some references.}. Synthetic tabular data may support model development and collaboration when real records are scarce or difficult to share \alex{It is necessary to add some references.}. Generation, however, does not guarantee privacy or downstream usefulness \citep{goncalves2020,hernandez2023,kaabachi2025}. A generator can preserve aggregate distributions while weakening the class-conditional structure required to recognize a rare outcome \alex{It is necessary to add some references.}. It can also increase apparent predictive performance by exaggerating relationships or selecting unusually easy cases \alex{It is necessary to add some references.}.
+Health datasets combine sensitive information, mixed numerical and categorical variables, missingness, and outcomes that are often uncommon but clinically consequential . Synthetic tabular data may support model development and collaboration when real records are scarce or difficult to share . Generation, however, does not guarantee privacy or downstream usefulness \citep{goncalves2020,hernandez2023,kaabachi2025}. A generator can preserve aggregate distributions while weakening the class-conditional structure required to recognize a rare outcome . It can also increase apparent predictive performance by exaggerating relationships or selecting unusually easy cases .
 
-Rare-outcome learning is commonly framed as a class-imbalance problem. Random sampling, SMOTE, class weighting, and conditional generation can increase the influence or number of minority observations, but additional records do not necessarily add information \alex{It is necessary to add some references.}. The limiting factor may instead be class overlap \alex{It is necessary to add some references.}: valid positive and negative observations can occupy similar regions of feature space. Class prevalence and class overlap are therefore different properties. Correcting the former does not necessarily repair the latter \alex{It is necessary to add some references.}.
+Rare-outcome learning is commonly framed as a class-imbalance problem. Random sampling, SMOTE, class weighting, and conditional generation can increase the influence or number of minority observations, but additional records do not necessarily add information . The limiting factor may instead be class overlap : valid positive and negative observations can occupy similar regions of feature space. Class prevalence and class overlap are therefore different properties. Correcting the former does not necessarily repair the latter .
 
-\alex{Here, I think that is necessary to emphasize the literature gap and after to explicitly to define the main goal of work before to describe what will be made/methodology! Also, it is important to explicitly to define the main goal for the research questions are well defined.}
 
-This distinction emerged from our qualification experiments. Conventional rebalancing, unconstrained CTGAN augmentation, and domain-guided candidate filtering produced limited or classifier-dependent gains \alex{It is necessary to add some references.}. Nearest-neighbour and explainability analyses suggested that weak or unstable class geometry remained after augmentation \alex{It is necessary to add some references.}. We therefore developed \sepa{}, a post-generation selection mechanism that draws an oversized candidate pool and ranks records using proximity to the real training manifold and label-consistent geometric evidence. Selection retains a prespecified class count, allowing separability pressure to be studied without attributing every change to class ratio.
 
-The central question is not whether \sepa{} wins on every dataset. It is when control of class separability improves rare-outcome prediction, why the effect differs between datasets, and whether an improvement merely reflects removal of difficult but legitimate minority cases. The contrast already observed between Vigitel obesity and COVID-19 hospital mortality \alex{It is need to put a referente!} provides a useful initial test. Vigitel shows a large and stable synthetic-to-real gain under separability pressure, whereas the COVID-19 effect is smaller relative to fold variation. We treat this contrast as a boundary-condition signal rather than a result to conceal.
+This distinction emerged from our qualification experiments. Conventional rebalancing, unconstrained CTGAN augmentation, and domain-guided candidate filtering produced limited or classifier-dependent gains . Nearest-neighbour and explainability analyses suggested that weak or unstable class geometry remained after augmentation . We therefore developed \sepa{}, a post-generation selection mechanism that draws an oversized candidate pool and ranks records using proximity to the real training manifold and label-consistent geometric evidence. Selection retains a prespecified class count, allowing separability pressure to be studied without attributing every change to class ratio.
+
+The central question is not whether \sepa{} wins on every dataset. It is when control of class separability improves rare-outcome prediction, why the effect differs between datasets, and whether an improvement merely reflects removal of difficult but legitimate minority cases. The contrast already observed between Vigitel obesity and COVID-19 hospital mortality  provides a useful initial test. Vigitel shows a large and stable synthetic-to-real gain under separability pressure, whereas the COVID-19 effect is smaller relative to fold variation. We treat this contrast as a boundary-condition signal rather than a result to conceal.
 
 \subsection{Research questions}
 
-We investigate three questions \alex{we need to change ``questions'' to ``Research Questions (\textbf{RQ})''! To put the acronym ``\textbf{RQ}:'' before each question and remove the numbers:
-
-- \textbf{RQ1}: Is class frequency correction sufficient, or does class overlap limit the utility of synthetic augmentation?
-
-- \textbf{RQ2}: Does ...
-
-- \textbf{RQ3}: When...}:
+We investigate three questions :
 \begin{enumerate}[leftmargin=*]
-\item Is class frequency correction sufficient, or does class overlap limit the utility of synthetic augmentation? \alex{Here, ``class frequency'' is related to the imbalance-class problem? If so, wouldn't it be better to use the expression ``imbalance class correction'' instead of ``class frequency correction''? Is ``imbalance correction'' at level of data or algorithm? It should be clearer here...}
+\item Is class frequency correction sufficient, or does class overlap limit the utility of synthetic augmentation?
 \item Does separability-aware selection improve rare-outcome prediction beyond random sampling, SMOTE, class weighting, and unconstrained generation?
 \item When performance improves, is the gain accompanied by acceptable calibration, minority coverage and diversity, and empirical privacy risk?
 \end{enumerate}
 
 The first completed experiment tests mechanism in the synthetic-to-real regime. A leakage-controlled fixed-setting comparison is followed by a blocked $2\times2$ factorial analysis that separates separability and anchor pressures. The strengthened experiment evaluates practical augmentation using real-only training, conventional imbalance methods, CTGAN, TVAE, and \sepa{} variants on shared held-out real folds. It expands evaluation from Macro-F1 to AUPRC, minority-specific measures, AUROC, balanced accuracy, Brier score, calibration parameters, minority coverage and diversity, and privacy-risk proxies.
 
-\alex{Maybe we could describe the main results before we discuss the contributions, this can substantiate and increase the value of contributions! However, the description of results should be more objective.}
+
 
 \subsection{Contributions}
 
@@ -36,10 +30,9 @@ This initial two-dataset study makes four contributions:
 \begin{enumerate}[leftmargin=*]
 \item It frames class overlap as a distinct target from class imbalance and global fidelity in synthetic health-data augmentation;
 \item It introduces a transparent post-generation selection mechanism whose effect can be separated from generator fitting and class-count correction;
-\item It uses a factorial experiment to attribute the strong Vigitel synthetic-to-real change to separability pressure while reporting the COVID-19 null attribution with equal emphasis; \alex{I have a question here, previously, the text states that will use factorial experiments to distinguish ``separability and anchor pressures'', so, what is ``separability pressures''? Are there how much concepts in this expression?}
+\item It uses a factorial experiment to attribute the strong Vigitel synthetic-to-real change to separability pressure while reporting the COVID-19 null attribution with equal emphasis;
 \item It tests the central rival explanation -- that separability improves prediction by deleting difficult cases -- through minority coverage, diversity, boundary, calibration, and privacy analyses in a strengthened augmentation protocol.
 \end{enumerate}
 
 Because only two health datasets are presently available, we describe this work as initial validation. The experimental and manuscript structure is designed for additional datasets, but no claim of broad clinical generalization is made from the current evidence.
 
-\alex{It is important to put a paragraph that describes the structure of paper, this help the reader to understand and give a general view of work.}

@@ -2,12 +2,17 @@
   "mode": "full",
   "datasets": [
     "covid",
-    "vigitel"
+    "vigitel",
+    "vigitel_smoking",
+    "kidney_mortality"
   ],
   "seed": 42,
   "splits": 5,
   "repeats": 3,
   "epochs": 30,
+  "append_existing": true,
+  "consolidated_four_task_output": true,
+  "resume": true,
   "pool_multiplier": 5,
   "generators": [
     "CTGAN",
