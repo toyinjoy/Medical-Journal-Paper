@@ -1,0 +1,121 @@
+study:
+  title: Separability-Aware Synthetic Data Selection for Rare-Outcome Prediction in Health Data
+  protocol_version: 1.0.0
+  python: "3.12"
+  primary_endpoint: auprc
+  primary_contrasts:
+    - [SepAware CTGAN, Standard CTGAN]
+    - [SepAware TVAE, Standard TVAE]
+  multiplicity: holm
+  folds: 5
+  repeats: 3
+  partition_seeds: [42, 43, 44]
+  generator_seed_base: 10000
+  generator_epochs: 30
+  candidate_pool_multiplier: 5
+  augmentation_target: balance_positive_to_negative_count
+  prediction_threshold: 0.5
+  classifiers: [LogisticRegression, RandomForest, CatBoost]
+  metrics: [auprc, auroc, macro_f1, positive_f1, positive_precision, positive_recall, balanced_accuracy, brier, calibration_intercept, calibration_slope]
+  diagnostics: [coverage_distance, diversity, exact_match_rate, membership_proxy_auroc, marginal_similarity, correlation_similarity, detection_auroc]
+  sepaware:
+    lambda_separability: 1.0
+    lambda_anchor: 0.0
+    robust_clip: 3.0
+    scale_epsilon: 1.0e-12
+    separability_margin_weight: 0.5
+    separability_probability_weight: 0.5
+    tie_break: stable_candidate_index
+
+tasks:
+  vigitel_obesity:
+    display_name: Vigitel obesity
+    source_name: Vigitel surveillance extract
+    path: vigitel2006_2023_obesidade_exclusoes.parquet
+    sha1: 1a4ac0d68a420f1367ab894fadd6b69b4738d94b
+    loader: parquet
+    outcome: desfecho
+    positive_definition: obesity indicator equals 1
+    inclusion: rows with a nonmissing binary outcome; reproducible stratified analytic sample
+    exclusion: identifiers and variables not in the prespecified feature list
+    sample_n: 5000
+    expected_positive: 851
+    expected_negative: 4149
+    features: [age, sex, fumante, exfuma, inativo, ativo_livre, ati_livre, diab, hart, dislipidemia, doces5, lanche_7, gordura, flvreg, years_schooling]
+    categorical: [sex, fumante, exfuma, inativo, ativo_livre, diab, hart, dislipidemia, doces5, lanche_7, gordura, flvreg]
+    numerical: [age, ati_livre, years_schooling]
+    leakage_exclusions: [chave, desfecho, ano, cidade]
+    missing_values: training_fold_median_for_numeric_and_mode_for_categorical
+    group_column: null
+    applicable: [augmentation, tstr, fidelity, coverage_diversity, exact_match, membership_proxy, calibration]
+    non_applicable:
+      temporal_validation: no prospective time field is used in the analytic task
+
+  covid_mortality:
+    display_name: COVID-19 hospital mortality
+    source_name: institutional COVID-19 hospital cohort
+    path: banco_covidIH.xlsx
+    sha1: 0bb7b9c7533ad64afcfe1e13ce2c30bb528e52e8
+    loader: excel
+    outcome: obito
+    positive_definition: recorded hospital death equals 1
+    inclusion: all 334 analytic hospital records with observed outcome
+    exclusion: identifiers; post-admission treatment and post-outcome fields
+    sample_n: null
+    expected_positive: 83
+    expected_negative: 251
+    features: [idade, sexo, etilismo, tabagismo, motivo_cancer, motivo_msk, motivo_digestivo2, motivo_cardio2, motivo_procedimentos2, motivo_lesao2, motivo_respiratorio, motivo_neuro, motivo_pele, motivo_genitourinaria, motivo_dm, motivo_mental_subst, motivo_infec2, motivo_propedeutica, n_comorbidades, comorb_hipertensao, comorb_ic, comorb_dac, comorb_fibrilacao, comorb_avc, comorb_dpoc, comorb_asma, comorb_dm, comorb_obesidade, comorb_drc, comorb_cancer, comorb_reumatologica, comorb_cirrose, comorb_hiv]
+    categorical: [sexo, etilismo, tabagismo, motivo_cancer, motivo_msk, motivo_digestivo2, motivo_cardio2, motivo_procedimentos2, motivo_lesao2, motivo_respiratorio, motivo_neuro, motivo_pele, motivo_genitourinaria, motivo_dm, motivo_mental_subst, motivo_infec2, motivo_propedeutica, comorb_hipertensao, comorb_ic, comorb_dac, comorb_fibrilacao, comorb_avc, comorb_dpoc, comorb_asma, comorb_dm, comorb_obesidade, comorb_drc, comorb_cancer, comorb_reumatologica, comorb_cirrose, comorb_hiv]
+    numerical: [idade, n_comorbidades]
+    leakage_exclusions: [record_id, idhosp_pcte, obito, data_alta, tempo_internacao]
+    missing_values: training_fold_median_for_numeric_and_mode_for_categorical
+    group_column: idhosp_pcte
+    applicable: [augmentation, tstr, fidelity, coverage_diversity, exact_match, membership_proxy, calibration, dacpf, anchor_factorial]
+    non_applicable: {}
+
+  vigitel_smoking:
+    display_name: Vigitel current smoking
+    source_name: Vigitel analytic smoking sample
+    path: Vigitel_Dataset/samples.pkl
+    sha1: 2c082100320367a836c6a90de3ab7b2323cc36bc
+    loader: pickle
+    outcome: fumante
+    positive_definition: current smoking indicator equals 1
+    inclusion: supplied analytic sample with observed smoking outcome; reproducible stratified sample
+    exclusion: identifiers, cluster fields and color label
+    sample_n: 5000
+    expected_positive: 616
+    expected_negative: 4384
+    features: [SANEAMENTO, SOCIO_ECON, alcabu, q6, civil, q35, q47, q70, adultos, af, q7, hortareg, sucodia, flvreco, atiocu, freq, cruadia, atidom, frutareg, diab, atitrans, tv_d_3, hart, saruim, cozidadi_cozidadia, sofrutad_sofrutadia, q8_anos]
+    categorical: [SANEAMENTO, SOCIO_ECON, alcabu, q6, civil, q35, q47, q70, af, q7, hortareg, sucodia, flvreco, atiocu, freq, cruadia, atidom, frutareg, diab, atitrans, tv_d_3, hart, saruim, cozidadi_cozidadia, sofrutad_sofrutadia]
+    numerical: [adultos, q8_anos]
+    leakage_exclusions: [idx, cluster_hier_str_setor_num, cluster_hier_str_setor_label, color, fumante]
+    missing_values: training_fold_median_for_numeric_and_mode_for_categorical
+    group_column: null
+    applicable: [augmentation, tstr, fidelity, coverage_diversity, exact_match, membership_proxy, calibration]
+    non_applicable:
+      anchor_factorial: no independently prespecified clinical anchors are available
+      temporal_validation: supplied file contains no survey-year field
+
+  kidney_mortality:
+    display_name: Kidney-cohort 365-day mortality
+    source_name: longitudinal kidney event log
+    path: tidy_event_data.feather
+    sha1: eedc305434b28484f00908f4e2e4d1693a31949b
+    loader: kidney_landmark
+    outcome: death_365d
+    positive_definition: first recorded death after the 365-day landmark and within the next 365 days
+    inclusion: death in horizon or recorded activity through horizon; alive at landmark
+    exclusion: death at or before landmark; features on or after landmark
+    sample_n: 5000
+    expected_positive: 267
+    expected_negative: 4733
+    features: [baseline_event_count, baseline_unique_event_count, baseline_active_days, diagnosis_count, medication_count, dialysis_hd_count, dialysis_dp_count, diag_n180_count, diag_n189_count, diag_n188_count, transplant_z940_count, transplant_event_count, vascular_access_count, hospitalization_count, erythropoietin_count]
+    categorical: []
+    numerical: [baseline_event_count, baseline_unique_event_count, baseline_active_days, diagnosis_count, medication_count, dialysis_hd_count, dialysis_dp_count, diag_n180_count, diag_n189_count, diag_n188_count, transplant_z940_count, transplant_event_count, vascular_access_count, hospitalization_count, erythropoietin_count]
+    leakage_exclusions: [patient_id, death_date, index_date, horizon_end, death_365d]
+    missing_values: structural_zero_for_absent_prelandmark_event_counts
+    group_column: patient_id
+    applicable: [augmentation, tstr, fidelity, coverage_diversity, exact_match, membership_proxy, calibration]
+    non_applicable:
+      anchor_factorial: no independently prespecified clinical anchors are available

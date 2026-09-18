@@ -1,0 +1,23 @@
+{
+  "mode": "full",
+  "datasets": [
+    "covid",
+    "vigitel",
+    "vigitel_smoking",
+    "kidney_mortality"
+  ],
+  "seed": 42,
+  "splits": 5,
+  "repeats": 3,
+  "epochs": 30,
+  "append_existing": false,
+  "resume": false,
+  "output_dir": "results/raw",
+  "pool_multiplier": 5,
+  "generators": [
+    "CTGAN",
+    "TVAE"
+  ],
+  "data_root_from_environment": "SEPAWARE_DATA_ROOT",
+  "output_directory": "results/raw"
+}

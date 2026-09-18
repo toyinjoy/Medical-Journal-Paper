@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.DS_Store
+tmp/
+output/pdf/main.pdf
+main.aux
+main.bbl
+main.blg
+main.log
+main.out

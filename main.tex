@@ -30,7 +30,7 @@
 \newcommand{\rsr}{Real+Synthetic$\rightarrow$Real}
 \newcommand{\NA}{--}
 
-\title{Improving Rare-Outcome Prediction With Separability-Aware Synthetic Health Data: A Four-Task Validation Study}
+\title{Separability-Aware Synthetic Data Selection for Rare-Outcome Prediction in Health Data}
 \author{Oluwatoyin Joy Omole$^{1}$\\
 \small $^{1}$Graduate Program in Computer Science, Universidade Federal de Minas Gerais, Belo Horizonte, Brazil}
 \date{}
@@ -39,15 +39,15 @@
 \maketitle
 
 \begin{abstract}
-\textbf{Background:} Synthetic data are often used to address rare outcomes by increasing minority-class sample size, but additional records may not improve prediction when classes overlap or when generation fails to preserve useful class-conditional structure.
+\textbf{Background:} Synthetic data are used to increase positive-class sample size in rare-outcome prediction, but additional records may not improve prediction when classes overlap or generation fails to preserve class-conditional structure.
 
-\textbf{Objective:} This study asks when controlling class separability improves the held-out-real utility of synthetic health data beyond class-frequency correction and whether utility gains are accompanied by loss of minority coverage.
+\textbf{Objective:} We tested whether post-generation control of class separability improves held-out-real utility beyond class-frequency correction and whether any gain is accompanied by reduced positive-class diversity.
 
-\textbf{Methods:} We developed \sepa{}, a post-generation mechanism that selects records from an oversized candidate pool using realism and label-consistent geometric evidence while preserving a prespecified class count. Validation uses four outcome tasks from three health-data sources: Vigitel obesity, COVID-19 hospital mortality, Vigitel current smoking, and landmark-defined 365-day kidney-cohort mortality. Completed analyses include leakage-controlled 5-fold synthetic-to-real evaluation and a blocked $2\times2$ factorial mechanism experiment. A strengthened augmentation analysis uses three repeated 5-fold partitions and compares real-only training, random sampling, SMOTE, class weighting, conditional tabular generative adversarial networks, tabular variational autoencoders, and their \sepa{}-selected variants. Evaluation includes discrimination, minority-specific performance, calibration, class-conditional coverage, and empirical privacy-risk proxies. A controlled simulation independently varies prevalence and overlap.
+\textbf{Methods:} \sepa{} ranks an oversized synthetic candidate pool using nearest-real proximity, nearest-hit/nearest-miss margin, and probability from a real-trained classifier while preserving prespecified class counts. We evaluated Vigitel obesity, COVID-19 hospital mortality, Vigitel current smoking, and kidney-cohort 365-day mortality; the two Vigitel tasks share one source. Three repeated 5-fold partitions compared real-only training, random over- and undersampling, SMOTE, class weighting, CTGAN, TVAE, and their selected variants. AUPRC was the primary augmentation endpoint. TSTR, calibration, fidelity, positive-class coverage and diversity, exact matches, and a membership proxy were reported separately. Primary paired tests used a corrected repeated-cross-validation procedure and Holm adjustment.
 
-\textbf{Results:} In the synthetic-to-real experiment, Vigitel Macro-F1 increased from 0.459 with standard conditional tabular generative adversarial network data to 0.583 with \sepa{}, and separability accounted for 96.00\% of treatment-plus-error variation ($P<.001$). In the strengthened analysis, \sepa{} improved mean AUPRC over standard CTGAN by 0.015 on COVID-19, 0.013 on Vigitel obesity, and 0.037 on Vigitel smoking, but by only 0.0003 on kidney mortality. It was inconsistent for TVAE and did not generally exceed real-only training or simple rebalancing. Selection improved nearest-minority coverage while reducing diversity, including for kidney mortality where no meaningful utility gain appeared. Controlled SepAware-SMOTE gains were small and its overlap and prevalence interactions were not significant.
+\textbf{Results:} Mean AUPRC differences between \sepa{} and standard CTGAN were 0.012 for COVID-19, 0.009 for Vigitel obesity, 0.031 for Vigitel smoking, and 0.005 for kidney mortality. Only smoking excluded zero after repeated-cross-validation correction and Holm adjustment (95\% CI 0.015--0.048; adjusted $p=.009$). All four TVAE intervals included zero. Selected CTGAN did not exceed the strongest conventional comparator on any task. CTGAN selection reduced positive-class coverage distance in every task but also reduced diversity. Exact-match rates were at most 0.0005 and membership-proxy AUROCs were near 0.5; these are not privacy guarantees.
 
-\textbf{Conclusions:} Class-boundary control is distinct from class balancing and can improve some candidate pools, but it is not universally beneficial. The kidney-mortality null result and repeated diversity losses show that apparent gains must be tested against simple baselines, calibration, minority coverage, and the possibility that selection merely removes difficult but valid cases.
+\textbf{Conclusions:} Class-boundary control differs from class balancing, but the evidence supports a generator-relative augmentation gain only for the smoking task. Selection should be compared with simple baselines and assessed for calibration and loss of positive-class heterogeneity. Internal cross-validation does not establish clinical benefit, transportability, or privacy.
 \end{abstract}
 
 \noindent\textbf{Keywords:} synthetic health data; tabular data; class imbalance; class overlap; rare outcomes; data augmentation; privacy; calibration
@@ -59,8 +59,7 @@
 \input{sections/05_discussion}
 \input{sections/06_limitations_future_work}
 \input{sections/07_conclusion}
-% Submission-only declarations require author confirmation and are tracked in
-% MANUSCRIPT_UNRESOLVED_COMMENTS.md. They are omitted from this presentation draft.
+\input{sections/08_declarations}
 
 \section*{Abbreviations}
 \begin{description}[leftmargin=3cm]

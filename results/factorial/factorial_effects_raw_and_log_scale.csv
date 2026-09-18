@@ -1,0 +1,13 @@
+dataset_group,scale,effect,estimate,multiplicative_percent_if_log
+covid,raw,separability,-0.018032190254685852,
+covid,raw,anchor,0.025430678115813975,
+covid,raw,interaction,0.028162840820431478,
+covid,natural_log,separability,-0.03382273881401769,-3.325714456477046
+covid,natural_log,anchor,0.05061585442227481,5.19187257319691
+covid,natural_log,interaction,0.04998546972602036,5.125582122994312
+vigitel,raw,separability,0.10240843266310792,
+vigitel,raw,anchor,0.00302017775573542,
+vigitel,raw,interaction,-0.011978274877628226,
+vigitel,natural_log,separability,0.1946214580454351,21.485102735590797
+vigitel,natural_log,anchor,0.006755131990051555,0.6777999355845885
+vigitel,natural_log,interaction,-0.024209660651007003,-2.3918957483484107

@@ -1,0 +1,9 @@
+dataset,contrast,p_unadjusted,p_holm
+COVID-19,SepAware CTGAN - Standard CTGAN,0.702131390226182,1.0
+COVID-19,SepAware TVAE - Standard TVAE,0.48482386412524736,1.0
+Vigitel,SepAware CTGAN - Standard CTGAN,0.16257237234180816,1.0
+Vigitel,SepAware TVAE - Standard TVAE,0.8470306014238913,1.0
+Vigitel smoking,SepAware CTGAN - Standard CTGAN,0.0011386789989922352,0.009109431991937882
+Vigitel smoking,SepAware TVAE - Standard TVAE,0.33656917582012735,1.0
+Kidney mortality,SepAware CTGAN - Standard CTGAN,0.36272052974140134,1.0
+Kidney mortality,SepAware TVAE - Standard TVAE,0.9310267511288501,1.0

@@ -14,6 +14,7 @@ import json
 import os
 import random
 import time
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -40,7 +41,7 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
 )
-from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.neighbors import NearestNeighbors
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -49,9 +50,13 @@ from sdv.sampling import Condition
 from sdv.single_table import CTGANSynthesizer, TVAESynthesizer
 
 
-ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "JMIR_SepAware" / "experiments" / "outputs"
-OUT.mkdir(parents=True, exist_ok=True)
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "code" / "src"))
+from sepaware.selection import SelectionConfig, score_candidates as score_sepaware_candidates
+
+DATA_ROOT = Path(os.environ.get("SEPAWARE_DATA_ROOT", ROOT.parent)).resolve()
+DEFAULT_OUT = ROOT / "results" / "raw"
+OUT = DEFAULT_OUT
 
 
 COVID_FEATURES = [
@@ -98,17 +103,17 @@ class DatasetSpec:
 
 
 SPECS = {
-    "covid": DatasetSpec("COVID-19", ROOT / "banco_covidIH.xlsx", "obito", ("obito",), tuple(COVID_FEATURES), None),
+    "covid": DatasetSpec("COVID-19", DATA_ROOT / "banco_covidIH.xlsx", "obito", ("obito",), tuple(COVID_FEATURES), None),
     "vigitel": DatasetSpec(
-        "Vigitel", ROOT / "vigitel2006_2023_obesidade_exclusoes.parquet", "obesity",
+        "Vigitel", DATA_ROOT / "vigitel2006_2023_obesidade_exclusoes.parquet", "obesity",
         ("obesity", "desfecho", "obesidade", "obeso"), tuple(VIGITEL_FEATURES), 5000,
     ),
     "vigitel_smoking": DatasetSpec(
-        "Vigitel smoking", ROOT / "Vigitel_Dataset" / "samples.pkl", "fumante",
+        "Vigitel smoking", DATA_ROOT / "Vigitel_Dataset" / "samples.pkl", "fumante",
         ("fumante",), tuple(VIGITEL_SMOKING_FEATURES), 5000,
     ),
     "kidney_mortality": DatasetSpec(
-        "Kidney mortality", ROOT / "tidy_event_data.feather", "death_365d",
+        "Kidney mortality", DATA_ROOT / "tidy_event_data.feather", "death_365d",
         ("death_365d",), tuple(KIDNEY_MORTALITY_FEATURES), 5000,
     ),
 }
@@ -364,40 +369,10 @@ def minority_candidate_pool(synthesizer, needed: int, reference: pd.DataFrame, f
 
 
 def score_candidates(pool: pd.DataFrame, real_train: pd.DataFrame, features: list[str], target: str, seed: int):
-    scaler = StandardScaler().fit(real_train[features])
-    real_x = scaler.transform(real_train[features])
-    candidate_x = scaler.transform(pool[features])
-    real_y = real_train[target].to_numpy(dtype=int)
-    candidate_y = pool[target].to_numpy(dtype=int)
-    nn_all = NearestNeighbors(n_neighbors=1).fit(real_x)
-    realism_distance = nn_all.kneighbors(candidate_x, return_distance=True)[0].ravel()
-    same_distance = np.zeros(len(pool))
-    opposite_distance = np.zeros(len(pool))
-    for cls in (0, 1):
-        idx = np.flatnonzero(candidate_y == cls)
-        if not len(idx):
-            continue
-        same = NearestNeighbors(n_neighbors=1).fit(real_x[real_y == cls])
-        opposite = NearestNeighbors(n_neighbors=1).fit(real_x[real_y != cls])
-        same_distance[idx] = same.kneighbors(candidate_x[idx], return_distance=True)[0].ravel()
-        opposite_distance[idx] = opposite.kneighbors(candidate_x[idx], return_distance=True)[0].ravel()
-    boundary = RandomForestClassifier(
-        n_estimators=300, min_samples_leaf=3, class_weight="balanced", random_state=seed, n_jobs=1
-    ).fit(real_train[features], real_y)
-    probability = boundary.predict_proba(pool[features])
-    confidence = probability[np.arange(len(pool)), candidate_y]
-
-    def normalize(values):
-        values = np.asarray(values, dtype=float)
-        low, high = np.nanmin(values), np.nanmax(values)
-        return np.full(len(values), 0.5) if not np.isfinite(high - low) or high == low else (values - low) / (high - low)
-
-    scored = pool.copy()
-    scored["realism"] = 1 - normalize(realism_distance)
-    scored["margin"] = opposite_distance - same_distance
-    scored["separability"] = 0.5 * normalize(scored["margin"]) + 0.5 * normalize(confidence)
-    scored["score"] = scored["realism"] + scored["separability"]
-    return scored
+    categorical = [c for c in features if real_train[c].nunique() <= 10 and np.allclose(real_train[c], real_train[c].round())]
+    numerical = [c for c in features if c not in categorical]
+    return score_sepaware_candidates(pool, real_train, features=features, numerical=numerical, categorical=categorical,
+                                     target=target, seed=seed, config=SelectionConfig())
 
 
 def augment_minority(real_train: pd.DataFrame, selected: pd.DataFrame, features: list[str], target: str):
@@ -439,7 +414,6 @@ def structure_privacy_metrics(real_train, real_test, synthetic, features, target
 def run_dataset(key: str, splits: int, repeats: int, epochs: int, pool_multiplier: int, generators: list[str], seed: int,
                 resume_predictions: pd.DataFrame | None = None, resume_diagnostics: pd.DataFrame | None = None):
     raw, features, target = load_dataset(key, seed)
-    splitter = RepeatedStratifiedKFold(n_splits=splits, n_repeats=repeats, random_state=seed)
     dataset_name = SPECS[key].name
     prior_pred = resume_predictions if resume_predictions is not None else pd.DataFrame()
     prior_diag = resume_diagnostics if resume_diagnostics is not None else pd.DataFrame()
@@ -449,9 +423,11 @@ def run_dataset(key: str, splits: int, repeats: int, epochs: int, pool_multiplie
         prior_diag = prior_diag.loc[prior_diag["dataset"].eq(dataset_name)].copy()
     prediction_rows = prior_pred.to_dict("records") if not prior_pred.empty else []
     diagnostic_rows = prior_diag.to_dict("records") if not prior_diag.empty else []
-    for split_index, (train_idx, test_idx) in enumerate(splitter.split(raw, raw[target])):
-        repeat = split_index // splits
-        fold = split_index % splits
+    split_rows = []
+    for repeat in range(repeats):
+        splitter = StratifiedKFold(n_splits=splits, shuffle=True, random_state=seed + repeat)
+        split_rows.extend((repeat, fold, train_idx, test_idx) for fold, (train_idx, test_idx) in enumerate(splitter.split(raw, raw[target])))
+    for repeat, fold, train_idx, test_idx in split_rows:
         if not prior_pred.empty and len(prior_pred.loc[(prior_pred["repeat"] == repeat) & (prior_pred["fold"] == fold)]) == 27:
             print(json.dumps({"dataset": key, "repeat": repeat, "fold": fold, "status": "resumed"}), flush=True)
             continue
@@ -492,7 +468,7 @@ def run_dataset(key: str, splits: int, repeats: int, epochs: int, pool_multiplie
                 raise RuntimeError(f"{generator} produced {len(positives)} positives; {n_add} required")
             standard = positives.sample(n=n_add, random_state=generator_seed)
             scored = score_candidates(pool, train, features, target, generator_seed)
-            selected = scored[scored[target] == 1].nlargest(n_add, "score")
+            selected = scored[scored[target] == 1].sort_values(["score", "candidate_index"], ascending=[False, True], kind="mergesort").head(n_add)
             datasets[f"Standard {generator}"] = (augment_minority(train, standard, features, target), False)
             datasets[f"SepAware {generator}"] = (augment_minority(train, selected, features, target), False)
             for condition, selected_syn in [(f"Standard {generator}", standard), (f"SepAware {generator}", selected)]:
@@ -544,7 +520,11 @@ def main():
     parser.add_argument("--epochs", type=int)
     parser.add_argument("--append-existing", action="store_true", help="Preserve completed results for datasets not rerun")
     parser.add_argument("--resume", action="store_true", help="Resume complete folds from checkpoint files")
+    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
+    global OUT
+    OUT = args.output_dir.resolve()
+    OUT.mkdir(parents=True, exist_ok=True)
     if args.mode == "smoke":
         splits, repeats, epochs, multiplier, generators = 2, 1, 2, 2, ["TVAE"]
     else:
@@ -552,7 +532,9 @@ def main():
     splits = args.splits or splits
     repeats = args.repeats or repeats
     epochs = args.epochs or epochs
-    config = vars(args) | {"splits": splits, "repeats": repeats, "epochs": epochs, "pool_multiplier": multiplier, "generators": generators}
+    config = {**vars(args), "output_dir": str(args.output_dir), "splits": splits, "repeats": repeats, "epochs": epochs, "pool_multiplier": multiplier, "generators": generators}
+    config["data_root_from_environment"] = "SEPAWARE_DATA_ROOT"
+    config["output_directory"] = str(OUT.relative_to(ROOT)) if OUT.is_relative_to(ROOT) else str(OUT)
     (OUT / "run_config.json").write_text(json.dumps(config, indent=2))
     existing_predictions = pd.read_csv(OUT / "predictive_metrics_long.csv") if args.append_existing and (OUT / "predictive_metrics_long.csv").exists() else pd.DataFrame()
     existing_diagnostics = pd.read_csv(OUT / "synthetic_diagnostics_long.csv") if args.append_existing and (OUT / "synthetic_diagnostics_long.csv").exists() else pd.DataFrame()

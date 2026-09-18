@@ -1,0 +1,28 @@
+\begin{longtable}{p{.20\textwidth}p{.24\textwidth}rrrr}
+\caption{TSTR performance. Values are means over 3 repeated 5-fold partitions and 3 classifiers (45 paired observations per condition and task). Synthetic class counts match each real training fold; evaluation uses held-out real records.}\label{tab:tstr-summary}\\
+\toprule
+Task & Synthetic training data & AUPRC & Macro-F1 & Recall & Brier \\
+\midrule
+\endfirsthead
+\toprule
+Task & Synthetic training data & AUPRC & Macro-F1 & Recall & Brier \\
+\midrule
+\endhead
+COVID-19 hospital mortality & SepAware CTGAN & 0.333 & 0.517 & 0.194 & 0.229 \\
+COVID-19 hospital mortality & SepAware TVAE & 0.324 & 0.478 & 0.498 & 0.385 \\
+COVID-19 hospital mortality & Standard CTGAN & 0.279 & 0.459 & 0.068 & 0.214 \\
+COVID-19 hospital mortality & Standard TVAE & 0.332 & 0.491 & 0.468 & 0.347 \\
+Kidney-cohort 365-day mortality & SepAware CTGAN & 0.080 & 0.491 & 0.007 & 0.059 \\
+Kidney-cohort 365-day mortality & SepAware TVAE & 0.100 & 0.519 & 0.368 & 0.176 \\
+Kidney-cohort 365-day mortality & Standard CTGAN & 0.063 & 0.486 & 0.000 & 0.052 \\
+Kidney-cohort 365-day mortality & Standard TVAE & 0.102 & 0.524 & 0.336 & 0.160 \\
+Vigitel current smoking & SepAware CTGAN & 0.279 & 0.601 & 0.319 & 0.128 \\
+Vigitel current smoking & SepAware TVAE & 0.179 & 0.443 & 0.689 & 0.419 \\
+Vigitel current smoking & Standard CTGAN & 0.139 & 0.467 & 0.000 & 0.109 \\
+Vigitel current smoking & Standard TVAE & 0.183 & 0.428 & 0.700 & 0.432 \\
+Vigitel obesity & SepAware CTGAN & 0.279 & 0.548 & 0.175 & 0.148 \\
+Vigitel obesity & SepAware TVAE & 0.200 & 0.348 & 0.847 & 0.572 \\
+Vigitel obesity & Standard CTGAN & 0.191 & 0.454 & 0.001 & 0.143 \\
+Vigitel obesity & Standard TVAE & 0.223 & 0.502 & 0.447 & 0.308 \\
+\bottomrule
+\end{longtable}

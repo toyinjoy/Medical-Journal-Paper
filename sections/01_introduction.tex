@@ -9,7 +9,7 @@ Existing synthetic-health-data evaluations typically assess global resemblance, 
 
 We developed \sepa{}, a post-generation mechanism that draws an oversized candidate pool and ranks records using proximity to the real training manifold and label-consistent geometric evidence. It retains a prespecified class count, separating the effect of candidate selection from a change in class ratio. We first isolate the mechanism in Vigitel obesity and COVID-19 hospital mortality, then evaluate practical augmentation across those tasks plus Vigitel current smoking and landmark-defined kidney-cohort mortality.
 
-The principal result is deliberately conditional. Within CTGAN candidate pools, \sepa{} increased mean AUPRC relative to standard CTGAN by 0.015 for COVID-19 mortality, 0.013 for Vigitel obesity, and 0.037 for Vigitel smoking, but by only 0.0003 for kidney mortality. Real-only training or simple resampling remained competitive or superior on several endpoints, TVAE results were inconsistent, and improved positive-class coverage repeatedly coincided with reduced diversity. Thus separability control can help in some settings, but it is neither a universal substitute for imbalance correction nor evidence that selected records preserve all clinically meaningful heterogeneity.
+In the completed augmentation benchmark, mean AUPRC differences between \sepa{} and standard CTGAN were 0.012 for COVID-19 mortality, 0.009 for Vigitel obesity, 0.031 for Vigitel smoking, and 0.005 for kidney mortality. After correction for repeated cross-validation and Holm adjustment, only the smoking contrast excluded zero. TVAE differences were small and inconsistent, and simple resampling or real-only training remained competitive. These results test the selection rule without assuming that it will improve every task.
 
 \subsection{Research Questions}
 
@@ -20,16 +20,16 @@ The study addresses three research questions:
 \item[\textbf{RQ3:}] When predictive performance improves, is the gain accompanied by acceptable calibration, positive-class coverage and diversity, and empirical privacy risk?
 \end{description}
 
-The mechanism experiment uses leakage-controlled synthetic-to-real evaluation followed by a blocked $2\times2$ factorial analysis that separates separability weighting from clinical-anchor weighting. The strengthened experiment evaluates real-plus-synthetic augmentation on shared held-out real folds using real-only training, conventional imbalance methods, CTGAN, TVAE, and \sepa{} variants. AUPRC is the primary augmentation endpoint; secondary analyses include Macro-F1, positive-class metrics, AUROC, balanced accuracy, Brier score, calibration, coverage, diversity, and privacy-risk proxies.
+The mechanism experiment uses leakage-controlled synthetic-to-real evaluation followed by a blocked $2\times2$ factorial analysis that separates separability weighting from clinical-anchor weighting. The common benchmark evaluates real-plus-synthetic augmentation and TSTR on shared held-out real folds using conventional imbalance methods, CTGAN, TVAE, and \sepa{} variants. AUPRC is the primary augmentation endpoint; secondary analyses include Macro-F1, positive-class metrics, AUROC, balanced accuracy, Brier score, calibration, coverage, diversity, fidelity, and privacy-risk proxies.
 
-\subsection{Contributions}
+\subsection{Study scope}
 
-This four-task study makes four contributions:
+The work has four parts:
 \begin{enumerate}[leftmargin=*]
 \item It frames class overlap as a target distinct from class imbalance and global fidelity in synthetic health-data augmentation.
 \item It introduces an auditable post-generation selection mechanism whose effect can be separated from generator fitting and class-count correction.
 \item It uses a factorial experiment to attribute the strong Vigitel obesity synthetic-to-real change to separability weighting while reporting the COVID-19 null attribution with equal emphasis.
-\item It tests the easier-case explanation through a strengthened benchmark spanning four tasks, two generator families, conventional imbalance baselines, calibration, positive-class structure, and privacy diagnostics.
+\item It tests whether selection concentrates easy cases through a common benchmark spanning four outcome tasks, two generator families, conventional imbalance baselines, calibration, positive-class structure, and privacy diagnostics.
 \end{enumerate}
 
-The remainder of the paper reviews synthetic tabular health data and rare-outcome evaluation, defines the datasets and leakage-controlled protocols, reports the mechanism and four-task augmentation results, interprets their boundary conditions, and concludes with limitations and requirements for external validation.
+The remainder of the paper reviews synthetic tabular health data and rare-outcome evaluation, defines the datasets and leakage-controlled protocols, reports common and dataset-specific results, and concludes with limitations and requirements for external validation.

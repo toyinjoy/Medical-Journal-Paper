@@ -1,7 +1,7 @@
 \section{Materials and Methods}
 \label{sec:methods}
 
-This section defines the four outcome tasks, leakage-controlled evaluation regimes, generators, selection rule, factorial mechanism analysis, strengthened augmentation benchmark, controlled overlap experiment, and reproducibility safeguards.
+This section defines the four outcome tasks, leakage-controlled evaluation regimes, generators, selection rule, factorial mechanism analysis, common benchmark, controlled overlap experiment, and reproducibility safeguards.
 
 \subsection{Datasets Definition and Description}
 \label{sec:datasets}
@@ -38,7 +38,7 @@ Dataset & $n$ & Positive & Negative & Primary use\\
 \midrule
 Vigitel obesity sample & 5,000 & 851 & 4,149 & \sepa{} mechanism and augmentation experiments\\
 COVID-19 mortality & 334 & 83 & 251 & \sepa{} mechanism and augmentation experiments\\
-Vigitel smoking sample & 5,000 & 616 & 4,384 & Strengthened augmentation validation\\
+Vigitel smoking sample & 5,000 & 616 & 4,384 & Common augmentation and TSTR benchmark\\
 Kidney 365-day mortality & 5,000 & 267 & 4,733 & Landmark augmentation validation\\
 \bottomrule
 \end{tabularx}
@@ -49,7 +49,7 @@ Kidney 365-day mortality & 5,000 & 267 & 4,733 & Landmark augmentation validatio
 
 All predictive experiments use stratified five-fold cross-validation. Binary variables are normalized to $\{0,1\}$, and 1/2-coded survey fields are mapped deterministically. Within each fold, numerical missing values are median-imputed, binary fields use the modal category, and continuous variables are standardized to zero mean and unit variance using statistics fitted only on that fold's real training subset. CTGAN fitting, candidate scoring, selection, and classifier training all occur within the training portion; the held-out real fold is used only for evaluation.
 
-Every predictive result reported in Section~\ref{sec:results} follows this fold-contained protocol. Within each fold of the factorial experiment, a single CTGAN model generates a candidate pool five times the real training size, and the same pool is scored under all four selection conditions described in Section~\ref{sec:factorial}. Pairing removes generator-to-generator variation between conditions, but the five fold scores are not independent replications: training folds overlap by 75\%, and the four conditions within a fold share a candidate pool. Section~\ref{sec:stat-limitations} discusses this dependence, and the primary factorial model blocks on fold.
+Every predictive result reported in Section~\ref{sec:results} follows this fold-contained protocol. Within each fold of the factorial experiment, a single CTGAN model generates a candidate pool five times the real training size, and the same pool is scored under all four selection conditions described in Section~\ref{sec:factorial}. Pairing removes generator-to-generator variation between conditions, but the five fold scores are not independent replications: training folds overlap by 75\%, and the four conditions within a fold share a candidate pool. Section~\ref{sec:discussion} discusses this dependence, and the primary factorial model blocks on fold.
 
 We distinguish exploratory from confirmatory evidence throughout. All numerical claims in Sections~\ref{sec:results} and \ref{sec:discussion} come from executed analyses and exported result tables; protocol-only, superseded single-split, or failed runs are not reported as evidence (Appendix~\ref{app:audit}). Results from different evaluation regimes are not pooled because standalone synthetic substitution, real-plus-synthetic augmentation, and internal synthetic cross-validation answer different questions.
 
@@ -60,27 +60,66 @@ Three regimes are kept distinct throughout:
 \begin{description}[leftmargin=3.4cm,style=nextline]
 \item[\ra{} (TRTR):] \textit{train on four real folds and evaluate on the fifth real fold, this is the predictive reference.}
 \item[\sr{} (TSTR):] \textit{train only on synthetic records generated from a real training fold and test on the corresponding held-out real fold, this measures substitution utility.}
-\item[\rsr{}:] \textit{append synthetic minority records to the real training fold and test on held-out real data, this measures augmentation, not synthetic substitution.}
+\item[\rsr{}:] \textit{append synthetic positive-class records to the real training fold and test on held-out real data; this measures augmentation, not synthetic substitution.}
 \end{description}
 
-Macro-F1 is the endpoint of the original mechanism experiments because both outcome classes contribute equally. In the strengthened augmentation analysis, AUPRC is the prespecified primary endpoint. Secondary outcomes are Macro-F1, positive-class F1, precision and recall, AUROC, balanced accuracy, Brier score, and calibration intercept and slope. Metrics not produced by the original executed pipeline are reported as unavailable rather than retrospectively reconstructed.
+Macro-F1 is the endpoint of the original mechanism experiments because both outcome classes contribute equally. In the common augmentation analysis, AUPRC is the prespecified primary endpoint. Secondary outcomes are Macro-F1, positive-class F1, precision and recall, AUROC, balanced accuracy, Brier score, and calibration intercept and slope. Metrics not produced by the original executed pipeline are reported as unavailable rather than retrospectively reconstructed.
 
 \subsection{Generators and Predictive Classifiers}
 \label{sec:generators}
 
-CTGAN \citep{xu2019} is the generator in the mechanism experiments. The strengthened augmentation analysis adds TVAE \citep{xu2019} to test whether the selection mechanism transfers beyond a GAN. Standard-generator and \sepa{} conditions share a candidate pool within a fold. Because Synthetic Data Vault (SDV) version 1.17 does not implement native conditional sampling for TVAE, TVAE is fitted directly to positive-class training-fold feature records and the outcome label is assigned by design; this is reported separately from CTGAN's outcome-conditional sampling. Predictive models in the strengthened analysis are logistic regression, random forest, and CatBoost \citep{prokhorenkova2018}; the mechanism experiments also use XGBoost \citep{chen2016} and TabPFN \citep{hollmann2025}.
+CTGAN \citep{xu2019} is the generator in the mechanism experiments. The common augmentation analysis adds TVAE \citep{xu2019} to test whether the selection mechanism transfers beyond a GAN. Standard-generator and \sepa{} conditions share a candidate pool within a fold. Because Synthetic Data Vault (SDV) version 1.17 does not implement native conditional sampling for TVAE, TVAE is fitted directly to positive-class training-fold feature records and the outcome label is assigned by design; this is reported separately from CTGAN's outcome-conditional sampling. Predictive models in the common analysis are logistic regression, random forest, and CatBoost \citep{prokhorenkova2018}; the mechanism experiments also use XGBoost \citep{chen2016} and TabPFN \citep{hollmann2025}.
 
 \subsection{\sepa{} Selection Framework}
 \label{sec:sepaware}
 
-For real training data $\mathcal{D}_R$ and candidate pool $\mathcal{C}$, each candidate $(\tilde{x},\tilde{y})$ receives a composite score
+Within one fold, let $\mathcal D_R=\{(x_i,y_i)\}_{i=1}^{n}$ denote the real training data and $\mathcal C=\{(\tilde x_j,\tilde y_j)\}_{j=1}^{m}$ an oversized synthetic candidate pool. Numerical fields are median-imputed, standardized using the training-fold mean and standard deviation, and concatenated with one-hot encodings of categorical fields. Denote this fitted mixed-type representation by $\phi(x)$. All quantities below are fitted from $\mathcal D_R$ and evaluated on $\mathcal C$; the held-out fold is not used.
+
+For candidate $j$, the nearest-real distance is
 \begin{equation}
-S(\tilde{x},\tilde{y}) = R(\tilde{x}) + \lambda_{\mathrm{sep}}\,Sep(\tilde{x},\tilde{y}) + \lambda_{\mathrm{anchor}}\,A(\tilde{x},\tilde{y}),
+d_j=\min_i\|\phi(\tilde x_j)-\phi(x_i)\|_2.
+\end{equation}
+For a vector $z$, robust normalization uses $c=\operatorname{median}(z)$ and $s=1.4826\operatorname{median}|z-c|$. If $s\le10^{-12}$, $s=\operatorname{IQR}(z)/1.349$; if that value is also at most $10^{-12}$, every normalized value is set to $0.5$. Otherwise,
+\begin{equation}
+N(z_j)=\frac{\operatorname{clip}((z_j-c)/s,-3,3)+3}{6}.
+\end{equation}
+The realism score is $R_j=1-N(d_j)$ and lies in $[0,1]$.
+
+Let $h_j$ be the distance to the nearest real record with label $\tilde y_j$, and let $q_j$ be the distance to the nearest real record with the opposite label. The geometric margin is $g_j=q_j-h_j$. A random forest fitted only to $\mathcal D_R$ gives assigned-label probability $p_j=\widehat P(Y=\tilde y_j\mid\tilde x_j)$. The separability score is
+\begin{equation}
+Sep_j=\tfrac12N(g_j)+\tfrac12N(p_j),
+\end{equation}
+which also lies in $[0,1]$. When independently prespecified anchors exist, $A_j\in[0,1]$ is the mean of their class-compatible indicators; otherwise $A_j=0$ and $\lambda_{\mathrm{anchor}}=0$. The composite score is
+\begin{equation}
+S_j=R_j+\lambda_{\mathrm{sep}}Sep_j+\lambda_{\mathrm{anchor}}A_j,
 \label{eq:sepaware}
 \end{equation}
-where $R$ is one minus a robustly normalized nearest-real distance, $Sep$ averages a nearest-hit/nearest-miss margin and the assigned-label probability from a real-trained random forest, and $A$ averages compatibility with predeclared class-conditional anchor patterns. The nonnegative weights $\lambda_{\mathrm{sep}}$ and $\lambda_{\mathrm{anchor}}$ control the contributions of separability and anchor compatibility, respectively. Candidates are ranked within target class and selected to reproduce the real training-fold class counts, so improved \tstr{} performance cannot be attributed to a changed class ratio.
+with $\lambda_{\mathrm{sep}}=1$ and $\lambda_{\mathrm{anchor}}=0$ in the common benchmark. Within each class, candidates are ordered by decreasing $S_j$ and then by their original candidate index, which provides deterministic tie-breaking. The first $Q_y$ candidates are retained for class $y$. If fewer than $Q_y$ candidates exist, execution stops with a shortfall error rather than duplicating records. Exact nearest-neighbour scoring requires $O(mn)$ distance evaluations and $O(m\log m)$ sorting, apart from classifier fitting.
 
-The fixed-$\lambda$ grid uses $\lambda_{\mathrm{sep}} \in \{0, 0.25, 0.5, 1\}$ and $\lambda_{\mathrm{anchor}} \in \{0, 0.25, 0.5\}$, because the best configuration on this grid is chosen using the same outcomes later used for reporting, grid results are treated as exploratory (Section~\ref{sec:fixed-lambda}). The subsequent factorial experiment instead predeclares two levels per factor, $\lambda_{\mathrm{sep}} \in \{0, 1\}$ and $\lambda_{\mathrm{anchor}} \in \{0, 0.5\}$, so that its conclusions do not depend on post-hoc selection.
+\begin{figure}[htbp]
+\centering
+\fbox{\begin{minipage}{.93\textwidth}
+\textbf{Algorithm 1: SepAware candidate selection within one training fold}
+
+\textbf{Inputs:} real training data $\mathcal D_R$; fitted generator or candidate pool $\mathcal C$; target counts $Q_y$; feature-type metadata; weights $\lambda_{\mathrm{sep}},\lambda_{\mathrm{anchor}}$; random seed.
+
+\begin{enumerate}[leftmargin=*,nosep]
+\item Fit imputation, numerical scaling, and categorical encoding on $\mathcal D_R$.
+\item If necessary, generate a candidate pool larger than the requested class totals using the recorded seed.
+\item Fit the scoring random forest on the represented real training data.
+\item For every candidate, compute nearest-real distance and $R_j$.
+\item Compute nearest-hit $h_j$, nearest-miss $q_j$, margin $g_j$, and assigned-label probability $p_j$.
+\item Apply $N(\cdot)$ separately to distance, margin, and probability; form $Sep_j$.
+\item If prespecified anchors apply, calculate and normalize $A_j$; otherwise set its weight to zero.
+\item Form $S_j$; rank within class by $(-S_j,j)$; select the first $Q_y$ records or raise a shortfall error.
+\end{enumerate}
+\textbf{Outputs:} selected synthetic records; component and composite scores; selected candidate indices; class counts and shortfall diagnostics.
+\end{minipage}}
+\caption{Fold-contained implementation of \sepa{}. Every fitted quantity is reset in each training fold.}
+\label{alg:sepaware}
+\end{figure}
+
+The earlier fixed-$\lambda$ grid used $\lambda_{\mathrm{sep}}\in\{0,0.25,0.5,1\}$ and $\lambda_{\mathrm{anchor}}\in\{0,0.25,0.5\}$. Because configurations were compared on the reporting folds, that grid is exploratory and does not determine the common-benchmark setting. The dataset-specific factorial experiment used predeclared levels $\lambda_{\mathrm{sep}}\in\{0,1\}$ and $\lambda_{\mathrm{anchor}}\in\{0,0.5\}$.
 
 Figure~\ref{fig:sepaware_pipeline} summarizes the pipeline. CTGAN produces candidates but does not itself optimize the three selection criteria; a separate selector scores and ranks candidates within each class and returns the requested class counts. Separating generation from selection makes the intervention auditable and allows component-wise ablation, which is the basis of the factorial design in Section~\ref{sec:factorial}. The design rules out one simple alternative explanation -- that a \tstr{} change is caused by a different class ratio -- because class counts are held fixed across all compared conditions. It does not rule out harder alternatives: ranking can select unusually easy prototypes, discard boundary cases, or amplify a classifier-specific shortcut. These possibilities motivate the confirmatory analyses proposed in Section~\ref{sec:limitations}.
 
@@ -128,7 +167,7 @@ Figure~\ref{fig:sepaware_pipeline} summarizes the pipeline. CTGAN produces candi
 
 Fidelity combines numerical-distribution similarity, categorical-proportion similarity, and correlation preservation into a single composite score. Separability is reported using cosine silhouette, a one-nearest-neighbor label-agreement index (SI), and hypothesis margin (HM). These are descriptive geometric measures: higher separation is not automatically clinically desirable, and we do not treat it as such (Section~\ref{sec:discussion}).
 
-The strengthened experiment measures held-out-real positive-class coverage as the mean distance from each positive test record to its nearest synthetic positive record after training-fold standardization. Positive-class diversity is the mean pairwise standardized distance among up to 1000 selected positive records. Exact overlap is the proportion of synthetic records with zero distance to a real training record. The membership-inference proxy compares each real training and held-out record's distance to the nearest synthetic record and reports membership-classification AUROC. These are empirical diagnostics, not evidence of anonymity or a formal guarantee.
+The common benchmark measures held-out-real positive-class coverage as the mean distance from each positive test record to its nearest synthetic positive record after training-fold standardization. Positive-class diversity is the mean pairwise standardized distance among up to 1000 selected positive records. Exact overlap is the proportion of synthetic records with zero distance to a real training record. The membership-inference proxy compares each real training and held-out record's distance to the nearest synthetic record and reports membership-classification AUROC. These are empirical diagnostics, not evidence of anonymity or a formal guarantee.
 
 \subsection{Domain-anchored Causal Plausibility Filtering}
 \label{sec:dacpf}
@@ -152,19 +191,16 @@ y_{ijk} = \mu + q_A A_i + q_B B_j + q_{AB} A_i B_j + \gamma_k + \varepsilon_{ijk
 
 where $y_{ijk}$ is the classifier-averaged Macro-F1 for separability level $i$, anchor level $j$, and fold $k$; $\mu$ is the grand mean; $A_i$ and $B_j$ are the coded factor levels; $q_A$, $q_B$, and $q_{AB}$ are the separability, anchor, and interaction coefficients; $\gamma_k$ is the fixed effect of fold $k$; and $\varepsilon_{ijk}$ is residual error. The high-minus-low factorial effects are $2q_A$, $2q_B$, and $2q_{AB}$. Type-II ANOVA partitions sums of squares among factors, interaction, fold, and residual error; the primary variation percentages exclude the fold block from the denominator so that factor contributions are compared against experimental error rather than against total variation. An unblocked $2^2r$ decomposition that treats folds as replications is also reported in the supplementary material for comparison, but Equation~\ref{eq:blocked} is the more defensible model for paired cross-validation conditions and is used for all primary conclusions.
 
-Both raw and log-transformed responses are analysed. Residual normality is assessed using Shapiro--Wilk and Jarque--Bera tests \citep{shapiro1965,jarque1987}; constant variance is assessed with median-centred Levene (Brown--Forsythe), Fligner--Killeen, and Breusch--Pagan tests \citep{brown1974,fligner1976,breusch1979}. Durbin--Watson and lag-one Ljung--Box statistics diagnose ordering-related serial patterns but cannot establish independence \citep{durbin1950,ljung1978}. As noted in Section~\ref{sec:preprocessing}, five-fold training sets overlap by 75\% and the four conditions within a fold are paired, so inference from this design is treated as exploratory rather than as a formal, independently replicated hypothesis test (Section~\ref{sec:stat-limitations}).
+Both raw and log-transformed responses are analysed. Residual normality is assessed using Shapiro--Wilk and Jarque--Bera tests \citep{shapiro1965,jarque1987}; constant variance is assessed with median-centred Levene (Brown--Forsythe), Fligner--Killeen, and Breusch--Pagan tests \citep{brown1974,fligner1976,breusch1979}. Durbin--Watson and lag-one Ljung--Box statistics diagnose ordering-related serial patterns but cannot establish independence \citep{durbin1950,ljung1978}. As noted in Section~\ref{sec:preprocessing}, five-fold training sets overlap by 75\% and the four conditions within a fold are paired, so inference from this design is treated as exploratory rather than as a formal, independently replicated hypothesis test (Section~\ref{sec:discussion}).
 
-\subsection{Strengthened Augmentation Experiment}
+\subsection{Common Four-task Augmentation and TSTR Experiments}
 \label{sec:strengthened}
 
 The augmentation experiment uses three repeated five-fold stratified partitions and compares real-only training, random oversampling, random undersampling, SMOTE, class-weighted training, standard CTGAN, \sepa{} CTGAN, standard TVAE, and \sepa{} TVAE. Synthetic conditions add positive candidates until the real training fold is balanced, the held-out fold retains its natural prevalence. All missing-value imputation is fitted on the real training fold before resampling or generation. The \sepa{} augmentation score uses realism plus separability with a fixed unit separability weight, no held-out outcome is used to tune the setting.
 
 Logistic regression supplies a linear and calibration-sensitive reference, random forest supplies a nonlinear ensemble, and CatBoost supplies a strong tabular learner. Hyperparameters and the 0.5 classification threshold are held fixed across methods. Fold-level results are retained so generator comparisons can be paired within dataset, repeated partition, fold, and classifier. The manuscript uses three independently shuffled five-fold partitions with independent fold-specific generator seeds. These repetitions improve stability assessment but remain internal repeats of the same source samples rather than external validation.
 
-\subsection{Four-task Strengthened Augmentation Experiment}
-\label{sec:strengthened-methods}
-
-The strengthened benchmark uses three repeated five-fold stratified partitions for each task. Within each training fold it compares real-only training, class weighting, random over- and undersampling, SMOTE, standard CTGAN, \sepa{} CTGAN, standard TVAE, and \sepa{} TVAE. Synthetic conditions add positive candidates until the training fold is balanced; the held-out real fold retains its natural prevalence. CTGAN and TVAE are trained for 30 epochs with fold-specific seeds and candidate pools five times the required positive count. Standard and selected conditions share the same generator fit. Logistic regression, random forest, and CatBoost are evaluated on identical held-out patients. All preprocessing, generation, and selection are fitted within the training fold.
+The TSTR experiment uses the same repeated partitions. For each generator, standard and selected full synthetic training sets reproduce the real training-fold class counts and share one candidate pool. TSTR results are never pooled with augmentation results.
 
 \subsection{Controlled Prevalence-by-overlap Experiment}
 \label{sec:controlled}
@@ -181,4 +217,4 @@ The Vigitel analysis uses a secondary survey extract and the COVID-19 analysis u
 \subsection{Reproducibility}
 \label{sec:reproducibility-methods}
 
-The strengthened experiment was executed with Python 3.12, NumPy 1.26.4, pandas 2.2.2, scikit-learn 1.6.1, SDV 1.17.2, CatBoost 1.2.10, XGBoost 3.2.0, imbalanced-learn 0.12.3, and statsmodels 0.14.2. A project-local environment pins NumPy 1.26.4 because the available compiled scientific extensions were incompatible with NumPy 2. Full software-stack notes, executed-notebook identifiers, and artefact-status decisions are given in the code and data availability statement and in Appendix \ref{app:audit}.
+The common experiments were executed with Python 3.12, NumPy 1.26.4, pandas 2.2.2, scikit-learn 1.6.1, SDV 1.17.2, CatBoost 1.2.10, XGBoost 3.2.0, imbalanced-learn 0.12.3, and statsmodels 0.14.2. A project-local environment pins NumPy 1.26.4 because the available compiled scientific extensions were incompatible with NumPy 2. Full software-stack notes, executed-notebook identifiers, and artefact-status decisions are given in the code and data availability statement and in Appendix \ref{app:audit}.

@@ -1,0 +1,6 @@
+Comparison,CatBoost,XGBoost
+Age anchor vs Std CTGAN,-0.0005,-0.0272
+Disease anchors vs Std CTGAN,+0.0508,+0.0084
+Full DACPF vs Std CTGAN,-0.0006,-0.0051
+Adding disease to age,-0.0001,+0.0221
+Adding age to disease,-0.0514,-0.0135

@@ -1,34 +1,30 @@
-\section{Reproducibility and Artefact Status}
+\section{Supplementary Methods and Results}
 \label{app:audit}
 
-Table~\ref{tab:audit} lists the status of every research artefact consulted while preparing this paper and states how each was treated. Superseded, protocol-only, or failed runs are excluded from all numerical claims in the main text; only executed, leakage-controlled five-fold notebooks and their exported CSV tables are reported as evidence.
+\subsection{Output hierarchy}
 
-\begin{longtable}{>{\raggedright\arraybackslash}p{.29\textwidth}>{\raggedright\arraybackslash}p{.18\textwidth}>{\raggedright\arraybackslash}p{.45\textwidth}}
-\caption{Status of research artefacts consulted during manuscript preparation.}\label{tab:audit}\\
-\toprule
-Artefact & Status & Manuscript treatment\\
-\midrule
-\endfirsthead
-\toprule
-Artefact & Status & Manuscript treatment\\
-\midrule
-\endhead
-Older dataset-specific fixed-$\lambda$ notebooks & Superseded single-split studies & Excluded from numerical claims because they use one 75/25 split.\\
-Combined \sepa{} fixed-$\lambda$ notebook & Executed five-fold study & Authority for fold-level fixed-$\lambda$ comparisons (Table~\ref{tab:fixedutility}).\\
-Protocol-audited $2^2$ cross-validation notebook & Executed & Superseded by the replicated factorial notebook below; retained only for earlier condition summaries and correlation interpretation during development.\\
-Replicated factorial ANOVA notebook (with results) & Latest executed experiment & Authority for the 40 fold responses, ANOVA, effects, and diagnostics (Section~\ref{sec:factorial-results}).\\
-Factorial assumption-test script and CSVs & Executed after the notebook above & Authority for expanded residual tests and the blocked-versus-unblocked sensitivity analysis.\\
-COVID \dacpf{} raw and summary CSVs & Executed & Authority for augmentation results in Table~\ref{tab:dacpf}.\\
-TabPFN augmentation notebook & Failed dependency, no output & Protocol only; no result claimed.\\
-Unexecuted causal-filter notebooks & Incomplete protocol & Discussed as development history / future work, not evidence.\\
-Cluster-then-augment notebook & No authoritative exported result located & Excluded from numerical results.\\
-Four-task augmentation script & Executed three-repeat five-fold experiment & Authority for conventional baselines, CTGAN/TVAE augmentation, calibration, positive-class coverage/diversity, and privacy-proxy results.\\
-Controlled prevalence-by-overlap script & Executed mechanism experiment & Authority for the independent prevalence and overlap manipulation; not counted as a third health dataset.\\
-\bottomrule
-\end{longtable}
+Fold-level augmentation results are stored in \path{results/raw/predictive_metrics_long.csv}; TSTR results are stored in \path{results/raw/tstr_fold_metrics.csv}. Diagnostic files use the same task, repetition, fold, and condition keys. Aggregate tables are generated from these files and are not edited manually. The experiment manifest records source hashes, features, exclusions, cohort construction, seeds, generator settings, metrics, and task-specific applicability.
 
-\subsection{Result-authority decisions}
+The common benchmark contains real-only training, random over- and undersampling, SMOTE, class weighting, standard and selected CTGAN, and standard and selected TVAE in augmentation. TSTR contains the four generator conditions. The full metric matrix includes AUPRC, AUROC, Macro-F1, positive-class F1, precision, recall, balanced accuracy, Brier score, calibration intercept, and calibration slope. Machine-readable summaries are in \path{results/tables/augmentation_metric_summary.csv} and \path{results/tables/tstr_metric_summary.csv}.
 
-The rerun factorial experiment differs numerically from earlier protocol-audited notes because CTGAN is stochastic even under a fixed, recorded software stack; this paper uses the newly executed observations consistently and does not mix values across reruns. An unblocked $2^2r$ decomposition that treats folds as replications is also present in the repository and assigns COVID-19 90.01\% error and Vigitel 16.92\% error; the main text instead uses the blocked model (Equation~\ref{eq:blocked}), which separates fold variation from treatment variation and yields 81.53\% and 3.59\% respectively (Table~\ref{tab:anova}). Both calculations exist in the repository, but they answer different questions, and only the blocked model is used for the paper's conclusions.
+\subsection{Repeated-cross-validation inference}
 
-The qualification factorial protocol evaluates standalone synthetic datasets (\tstr{}). The strengthened experiment separately reports real-plus-synthetic augmentation and does not pool the two regimes. AUPRC, calibration, minority geometry, exact-match, and membership-proxy measures are reported only for the strengthened run. Attribute inference, formal privacy guarantees, and external validation remain absent and are reported as limitations rather than estimated after the fact.
+For each task and generator, SepAware and standard observations are paired by repetition, fold, and classifier. Classifier differences are averaged within a fold before inference. If $\bar d$ and $s_d^2$ are the mean and variance of the 15 fold summaries, the corrected standard error is
+\begin{equation}
+\operatorname{SE}_{\mathrm{NB}}=\sqrt{\left(\frac{1}{15}+\frac{n_{test}}{n_{train}}\right)s_d^2},
+\end{equation}
+with $n_{test}/n_{train}=0.25$ for five-fold cross-validation. Two-sided $t$ intervals use 14 degrees of freedom. Holm adjustment is applied across the eight prespecified task--generator contrasts. This correction addresses overlap approximately; it does not make internal folds equivalent to independent cohorts.
+
+\subsection{Fidelity and disclosure-risk diagnostics}
+
+Numerical marginal similarity is one minus the Kolmogorov--Smirnov distance; categorical similarity is one minus total-variation distance. Marginal similarity averages these feature-level values. Correlation similarity is one minus half the mean absolute difference between real and synthetic correlation matrices over the imputed numeric and numeric-coded categorical fields. Detection AUROC comes from a classifier distinguishing real training records from synthetic records; 0.5 indicates chance discrimination and values farther from 0.5 indicate easier detection.
+
+Coverage is the mean distance from each held-out positive record to its nearest synthetic positive record. Diversity is the mean pairwise distance among at most 1,000 synthetic positive records. Exact-match rate is the synthetic fraction at zero encoded distance from a real training record. The membership proxy classifies real training versus held-out records using nearest-synthetic distance. None of these metrics provides a formal privacy guarantee.
+
+\subsection{Dataset-specific analyses}
+
+The COVID-19 DACPF files are stored in \texttt{results/dataset\_specific/}. The factorial fold responses, effects, assumption diagnostics, and correlation analyses are stored in \texttt{results/factorial/}. These analyses are not averaged with common-benchmark results. No clinical-anchor experiment was created for smoking or kidney mortality because independently justified anchor definitions were unavailable.
+
+\subsection{Excluded and superseded evidence}
+
+Single-split development notebooks, failed TabPFN runs, and protocols without successful outputs are excluded from numerical claims. The reporting-fold fixed-$\lambda$ search is retained as exploratory development evidence but is superseded for the common benchmark by the fixed manifest setting. The repository audit and task-by-experiment matrix give the status and rationale for every identified experiment.

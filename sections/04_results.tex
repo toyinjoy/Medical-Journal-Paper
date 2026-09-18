@@ -1,225 +1,63 @@
 \section{Results}
 \label{sec:results}
 
-\subsection{Rebalancing and unconstrained augmentation are insufficient}
-\label{sec:dacpf-results}
+\subsection{Dataset and protocol overview}
 
-The project began from the conventional explanation for poor rare-outcome prediction: that the minority class simply supplies too few examples. We first examined ordinary rebalancing, CTGAN minority augmentation, and increasingly targeted candidate filters. The common result across these attempts was not that augmentation never helped, but that additional minority records did not produce a sufficiently large and consistent gain to explain the problem by class frequency alone. Some of these early notebooks were single-split or diagnostic studies and are treated as hypothesis-generating rather than confirmatory evidence.
+The common benchmark included four outcome tasks from three sources. Vigitel obesity and current smoking share the Vigitel source and are not independent cohorts. The analytic samples contained 851 of 5,000 positive obesity records, 83 deaths among 334 COVID-19 admissions, 616 of 5,000 current smokers, and 267 deaths among 5,000 kidney-cohort patients. Every method used the same held-out real folds within a task. The augmentation export contains 1,620 fold--classifier rows (4 tasks, 9 methods, 3 classifiers, 3 repetitions, and 5 folds); no result was aggregated before export.
 
-The leakage-controlled \dacpf{} rerun provides the strongest five-fold evidence from this stage (Table~\ref{tab:dacpf}). Standard CTGAN augmentation improves mean Macro-F1 relative to real-only training for both classifiers available in the local environment. Adding an age filter, or a combined age-and-disease filter, does not improve on standard CTGAN. Disease-anchor filtering performs best, adding 0.0508 over standard CTGAN for CatBoost but only 0.0084 for XGBoost. Domain targeting can therefore help, but its effect depends on both the anchor and the classifier, and adding more constraints is not monotonically beneficial.
+\subsection{Real-only and conventional imbalance baselines}
 
-\begin{table}[htbp]
-\centering
-\caption{Five-fold COVID-19 augmentation Macro-F1. These are Real+Synthetic$\rightarrow$Real results and are not directly comparable with the standalone-synthetic \tstr{} results in Section~\ref{sec:fixed-lambda}.}
-\label{tab:dacpf}
-\begin{tabular}{lrr}
-\toprule
-Condition & CatBoost & XGBoost\\
-\midrule
-Real only & 0.4740 & 0.4759\\
-Real + standard CTGAN & 0.5262 & 0.5255\\
-Real + age-filtered CTGAN & 0.5257 & 0.4983\\
-Real + disease-filtered CTGAN & \textbf{0.5771} & \textbf{0.5339}\\
-Real + combined \dacpf{} & 0.5256 & 0.5204\\
-\bottomrule
-\end{tabular}
-\end{table}
+Table~\ref{tab:common-benchmark} reports the full augmentation comparison. Real-only training had the highest mean AUPRC for Vigitel obesity (0.287), Vigitel smoking (0.300), and kidney mortality (0.122). Random oversampling had the highest COVID-19 AUPRC (0.355). Threshold-dependent conclusions differed: for kidney mortality, real-only training had mean positive-class recall below 0.001 at the fixed 0.5 threshold, whereas random undersampling increased recall to 0.617 but increased the Brier score from 0.050 to 0.225. These results show why ranking, classification at a fixed threshold, and calibration are reported separately.
+
+\input{tables/common_benchmark_primary.tex}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=.75\textwidth]{covid_dacpf_summary.pdf}
-\caption{COVID-19 \dacpf{} Macro-F1 averaged across CatBoost and XGBoost. The classifier-specific values in Table~\ref{tab:dacpf} show why this average should not be interpreted as a universal anchor effect.}
-\label{fig:dacpf}
+\includegraphics[width=.96\textwidth]{common_benchmark_auprc.pdf}
+\caption{Held-out-real AUPRC in the augmentation regime. Bars are means over 3 repeated 5-fold partitions and 3 classifiers. Methods within each task use identical test folds; corrected paired comparisons are shown in Figure~\ref{fig:primary-contrasts}.}
+\label{fig:common-auprc}
 \end{figure}
 
-This stage ruled out a simple monotonic story in which balancing classes, generating more synthetic cases, or imposing more domain constraints necessarily improves prediction. We then used explainability and neighbourhood analyses to examine diversity, class-wise recall, feature-importance shifts, silhouette, nearest-neighbour label agreement, and hypothesis margin. Because some of these analyses used representative folds or earlier configurations, they establish the diagnostic rationale for what follows rather than a further confirmatory result. Their implication was that weak or unstable class geometry remained after augmentation, which led to the working hypothesis that class overlap, rather than imbalance alone, was limiting synthetic-to-real transfer.
+\subsection{Standard generators and \sepa{} selection}
 
-\subsection{Separability as an explicit generation objective}
-\label{sec:fixed-lambda}
-
-\sepa{} is the intervention implied by that diagnosis. It does not change the target class counts; instead it asks whether records selected for label-consistent geometry transfer better to held-out real cases. The fixed-$\lambda$ experiment fits the complete pipeline independently in five stratified folds. Table~\ref{tab:fixedutility} reports classifier-averaged fold means and 95\% $t$ intervals. On COVID-19, the balanced setting reaches 0.5492 Macro-F1, but its interval is wide. On Vigitel, both the varied grid and the fixed high-separability setting reach approximately 0.58 and outperform ordinary CTGAN in all ten matched fold--classifier comparisons. The varied-grid result remains exploratory because the configuration was selected using the same folds used for reporting.
-
-\begin{table}[htbp]
-\centering
-\caption{Five-fold \tstr{} Macro-F1. Means and 95\% intervals are computed from five classifier-averaged fold scores.}
-\label{tab:fixedutility}
-\begin{tabular}{llrr}
-\toprule
-Dataset & Training data & Mean & 95\% half-width\\
-\midrule
-\multirow{4}{*}{COVID} & Real & 0.5069 & 0.0690\\
-& Standard CTGAN & 0.4627 & 0.0407\\
-& \sepa{} varied grid & 0.5350 & 0.0649\\
-& Fixed balanced $(1.0,0.5)$ & \textbf{0.5492} & 0.0959\\
-\midrule
-\multirow{4}{*}{Vigitel} & Real & 0.4672 & 0.0088\\
-& Standard CTGAN & 0.4588 & 0.0107\\
-& \sepa{} varied grid & \textbf{0.5839} & 0.0225\\
-& Fixed balanced $(1.0,0.5)$ & 0.5834 & 0.0216\\
-\bottomrule
-\end{tabular}
-\end{table}
+For CTGAN, mean AUPRC differences between \sepa{} and standard sampling were 0.012 for COVID-19, 0.009 for Vigitel obesity, 0.031 for Vigitel smoking, and 0.005 for kidney mortality. The Nadeau--Bengio corrected intervals were $[-0.055,0.079]$, $[-0.004,0.021]$, $[0.015,0.048]$, and $[-0.007,0.017]$, respectively. Only smoking remained significant after Holm adjustment ($p_{\mathrm{adj}}=.009$). TVAE differences ranged from $-0.007$ to 0.003, and all corrected intervals included zero. The inferential unit was the mean difference across classifiers within each repeated-CV fold ($n=15$ fold summaries per contrast), not 45 fold--classifier observations.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=.9\textwidth]{fixed_lambda_fivefold_utility.pdf}
-\caption{Five-fold \tstr{} Macro-F1 for the principal fixed-$\lambda$ comparison. Error bars are 95\% $t$ intervals over the five classifier-averaged fold scores.}
-\label{fig:fixedutility}
+\includegraphics[width=.82\textwidth]{primary_contrasts.pdf}
+\caption{Primary paired AUPRC contrasts in real-plus-synthetic augmentation. Points are mean \sepa{} minus standard-generator differences; intervals use the Nadeau--Bengio repeated-cross-validation correction. Eight task--generator tests were adjusted together by Holm's method.}
+\label{fig:primary-contrasts}
 \end{figure}
 
-Table~\ref{tab:lambda} reports the highest mean selection scores from the same run. The repository composite fidelity score varies little across configurations, whereas SI and HM respond strongly to separability pressure. Figure~\ref{fig:lambda-tradeoff} shows the same pattern across the full grid: global fidelity is comparatively stable while separability changes substantially. This is evidence that the selector controls a property not captured by the composite fidelity score; it is not evidence that the selected records are clinically representative.
+The selected CTGAN condition did not surpass the strongest conventional method on any task. Its mean AUPRC was 0.323 for COVID-19, 0.256 for Vigitel obesity, 0.249 for Vigitel smoking, and 0.110 for kidney mortality. The corresponding best conventional values were 0.355, 0.287, 0.300, and 0.122. SepAware therefore improved one generator comparison reliably without establishing superiority over simpler training strategies.
 
-\begin{table}[htbp]
-\centering
-\caption{Top executed \sepa{} grid configurations. ``Quality'' is the repository composite fidelity score.}
-\label{tab:lambda}
-% \resizebox{\textwidth}{!}{%
-\begin{tabular}{llrrrr}
-\toprule
-Dataset & $(\lambda_{sep},\lambda_{anchor})$ & Quality & SI & HM & Selection\\
-\midrule
-COVID & $(1.0,0.0)$ & 0.956 & 0.779 & 0.897 & 2.154\\
-COVID & $(1.0,0.25)$ & 0.961 & 0.760 & 0.854 & 2.095\\
-COVID & $(1.0,0.5)$ & 0.965 & 0.754 & 0.830 & 2.067\\
-Vigitel & $(1.0,0.5)$ & 0.967 & 0.812 & 0.829 & 2.124\\
-Vigitel & $(1.0,0.25)$ & 0.967 & 0.811 & 0.822 & 2.116\\
-Vigitel & $(1.0,0.0)$ & 0.966 & 0.811 & 0.822 & 2.116\\
-\bottomrule
-\end{tabular}
-% }
-\end{table}
+\subsection{TSTR utility}
+\label{sec:tstr-results}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=.88\textwidth]{lambda_fidelity_separability.pdf}
-\caption{Five-fold mean fidelity--separability trade-off across executed $\lambda$ settings. Colour represents separability weight; marker size represents anchor weight.}
-\label{fig:lambda-tradeoff}
-\end{figure}
+The common TSTR experiment trained each classifier only on a synthetic dataset whose class counts matched the corresponding real training fold and evaluated on the untouched real test fold. Standard and selected variants shared candidate pools. Table~\ref{tab:tstr-summary} reports all tasks and both generators; these substitution results are kept separate from augmentation.
 
-\subsection{Attributing the gain: replicated factorial experiment}
-\label{sec:factorial-results}
+\input{tables/tstr_summary.tex}
 
-The fixed-$\lambda$ results raise a sharper question: was the apparent gain produced by separability pressure, anchor pressure, or their interaction? The replicated $2^2$ factorial experiment (Section~\ref{sec:factorial}) answers this component-level question under four predeclared settings. Figure~\ref{fig:foldprofiles} displays all 40 fold responses. COVID-19 profiles cross and show substantial fold-to-fold variation; Vigitel shows a stable step increase when separability is enabled.
+For CTGAN, selection increased mean TSTR AUPRC from 0.279 to 0.333 for COVID-19, 0.191 to 0.279 for Vigitel obesity, 0.139 to 0.279 for smoking, and 0.063 to 0.080 for kidney mortality. TVAE changes were smaller and mixed: 0.332 to 0.324, 0.223 to 0.200, 0.183 to 0.179, and 0.102 to 0.100, respectively. These are descriptive substitution results and do not replace the prespecified augmentation contrasts.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=.95\textwidth]{factorial_fold_profiles.pdf}
-\caption{Fold-level \tstr{} Macro-F1 in the replicated $2^2$ \sepa{} experiment. Black lines show condition means.}
-\label{fig:foldprofiles}
-\end{figure}
+\subsection{Calibration, coverage, diversity, fidelity, and privacy diagnostics}
 
-\begin{table}[htbp]
-\centering
-\caption{Mean \tstr{} Macro-F1 by predeclared factorial condition. Values are means of the five exported fold responses.}
-\label{tab:conditionmeans}
-\begin{tabular}{lrrrr}
-\toprule
-Dataset & Realism only & Anchor only & Separability only & Both\\
-\midrule
-COVID & 0.516 & 0.528 & 0.484 & 0.524\\
-Vigitel & 0.470 & 0.480 & 0.579 & 0.576\\
-\bottomrule
-\end{tabular}
-\end{table}
+In augmentation, CTGAN selection reduced positive-class coverage distance for every task: from 4.410 to 4.115 for COVID-19, 1.977 to 1.723 for Vigitel obesity, 3.833 to 3.586 for smoking, and 1.744 to 1.595 for kidney mortality. It also reduced within-positive-class diversity from 11.332 to 7.888, 5.478 to 4.356, 7.340 to 6.310, and 6.827 to 4.425, respectively. Thus closer coverage was consistently accompanied by a more concentrated selected sample.
 
-The condition means in Table~\ref{tab:conditionmeans} make the contrast explicit. In Vigitel, enabling separability raises the mean from approximately 0.47--0.48 to 0.576--0.579, while adding anchors makes little difference. COVID-19 shows no corresponding ordering: separability-only is the \emph{lowest} condition mean, and the combined condition returns approximately to realism-only performance.
+In augmentation, exact-match rates were zero or below 0.0005, and membership-proxy AUROCs ranged from 0.499 to 0.508 for standard and selected CTGAN. In TSTR, kidney TVAE had much higher exact-match rates: 0.105 for standard TVAE and 0.134 after selection. TSTR detection AUROC was also high for several conditions, reaching 0.995--0.998 for kidney CTGAN and at least 0.979 for kidney TVAE. These results show readily detectable distributional differences and, for kidney TVAE, material duplication risk. Membership-proxy AUROCs remained near 0.5, but none of these measures establishes anonymity. The full marginal similarity, correlation similarity, detection, coverage, diversity, exact-match, and membership-proxy matrix is provided as a machine-readable supplementary table.
 
-The blocked raw-scale ANOVA in Table~\ref{tab:anova} is the primary component analysis. For COVID-19, none of the treatment effects is significant, and residual error accounts for 81.53\% of treatment-plus-error variation after separating out the fold block. For Vigitel, separability accounts for 96.00\% of that variation and is highly significant ($p=5.03\times10^{-10}$), while anchor and interaction contributions are negligible. The log-scale model yields the same substantive conclusion.
+\subsection{Dataset-specific anchor and factorial analyses}
 
-\begin{table}[htbp]
-\centering
-\caption{Blocked factorial ANOVA: percentage of experimental variation and $p$-values on raw Macro-F1. Percentages exclude fold sum of squares from the denominator.}
-\label{tab:anova}
-\begin{tabular}{llrr}
-\toprule
-Dataset & Source & Variation (\%) & $p$\\
-\midrule
-\multirow{4}{*}{COVID} & Separability & 5.13 & 0.4019\\
-& Anchor & 10.21 & 0.2439\\
-& Interaction & 3.13 & 0.5103\\
-& Error & 81.53 & \NA\\
-\midrule
-\multirow{4}{*}{Vigitel} & Separability & 96.00 & $5.03\times10^{-10}$\\
-& Anchor & 0.08 & 0.6069\\
-& Interaction & 0.33 & 0.3154\\
-& Error & 3.59 & \NA\\
-\bottomrule
-\end{tabular}
-\end{table}
+Clinical-anchor analyses were not part of the common benchmark. The COVID-19 DACPF experiment required age, cancer, and respiratory-admission variables; comparable anchors were not prespecified for smoking or kidney mortality. Applying invented substitutes after seeing the data would have introduced outcome-guided tuning.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=.88\textwidth]{factorial_variation.pdf}
-\caption{Variation allocation for the blocked raw-scale factorial models.}
-\label{fig:variation}
-\end{figure}
+In the five-fold COVID-19 DACPF augmentation run, disease-anchor filtering produced mean Macro-F1 of 0.577 for CatBoost and 0.534 for XGBoost, compared with 0.526 for each classifier under standard CTGAN augmentation. Age-only and combined filters did not improve on standard augmentation. The result is dataset- and classifier-specific.
 
-\begin{table}[htbp]
-\centering
-\caption{Residual assumption diagnostics for the blocked factorial models.}
-\label{tab:assumptions}
-% \resizebox{\textwidth}{!}{%
-\begin{tabular}{llrrrrp{2.5cm}}
-\toprule
-Dataset & Scale & Shapiro & B--F & Fligner & B--P & Assessment\\
-\midrule
-COVID & raw & .2446 & .8409 & .8394 & .4415 & no detected violation\\
-COVID & log & .2031 & .8173 & .8050 & .6435 & no detected violation\\
-Vigitel & raw & .8564 & .8413 & .7706 & .0186 & variance flag\\
-Vigitel & log & .8625 & .7463 & .6834 & .0237 & variance flag\\
-\bottomrule
-\end{tabular}
-% }
-\end{table}
+The blocked $2^2$ anchor-by-separability TSTR analysis was likewise limited to Vigitel obesity and COVID-19. The fold-paired Vigitel separability effect was 0.102 Macro-F1 (95\% CI 0.077--0.128; exploratory $p<.001$). The COVID-19 estimate was $-0.018$ (95\% CI $-0.063$--0.027; $p=.332$). Anchor and interaction intervals included zero for both tasks. Overlapping training folds and shared candidate pools limit these exploratory intervals; they are not independent replications.
 
-Normality tests do not reject for either dataset. Vigitel's groupwise robust variance tests (Brown--Forsythe, Fligner--Killeen) do not reject equal variance, but Breusch--Pagan does, and the log transform does not resolve this conflict. More importantly, independence is not established, because the cross-validation training sets overlap and the four conditions within each fold share a candidate pool. The very small Vigitel residual should therefore be confirmed across independent generator and partition seeds before it is treated as a stable population effect (Section~\ref{sec:stat-limitations}).
+\subsection{Controlled simulation}
 
-\subsection{Strengthened augmentation comparison across four tasks}
-\label{sec:strengthened-results}
+The simulation varied prevalence and class overlap independently and is not counted as a health-data task. SepAware-SMOTE exceeded ordinary SMOTE in each of nine prevalence--overlap cells for logistic regression, but mean differences were small (0.001--0.024). In pooled heteroscedasticity-robust regression, neither the method contrast nor its overlap and prevalence interactions was distinguishable from zero (all $p>.91$). The simulation therefore supports separating prevalence from overlap but does not locate a stable region in which selection improves predictive performance.
 
-The practical augmentation analysis gives a more restrained result than the synthetic-to-real factorial experiment (Table~\ref{tab:strengthened}). Across three repeated partitions and three classifiers, \sepa{} CTGAN produced the highest COVID-19 Macro-F1 (0.541), followed by random oversampling (0.535) and class weighting (0.533). Random oversampling produced the highest Vigitel Macro-F1 (0.575), approximately equal to class weighting (0.574). Vigitel AUPRC was highest for real-only training (0.288) and class weighting (0.287); COVID-19 AUPRC was similar for random oversampling (0.357), \sepa{} CTGAN (0.354), and real-only training (0.354).
+\subsection{Sensitivity and statistical interpretation}
 
-Within-generator paired comparisons are favorable for CTGAN on three tasks but not the fourth. Relative to standard CTGAN, \sepa{} increases mean AUPRC by 0.015 on COVID-19, 0.013 on Vigitel obesity, and 0.037 on Vigitel smoking; corresponding Macro-F1 differences are 0.033, 0.019, and 0.038. Kidney mortality is effectively unchanged (AUPRC difference 0.0003; Macro-F1 difference $-0.002$). TVAE differences are inconsistent: $-0.015$, $-0.001$, 0.007, and $-0.0006$ AUPRC for COVID-19, Vigitel obesity, Vigitel smoking, and kidney mortality, respectively.
-
-For Vigitel smoking, real-only training gives the highest AUPRC (0.299), whereas random oversampling gives the highest Macro-F1 (0.582). For kidney mortality, real-only training gives the highest AUPRC (0.121), followed by random undersampling (0.118). Real-only kidney models have zero mean minority recall at the default 0.5 threshold, while random undersampling raises recall to 0.620 but worsens the Brier score from 0.050 to 0.225. Thus ranking, thresholded sensitivity, and calibration lead to different operational conclusions.
-
-\begin{table}[H]
-\centering
-\caption{Held-out-real augmentation performance for the two new tasks, averaged across 3 repeated partitions, 5 folds, and 3 classifiers. AUPRC was the prespecified primary endpoint.}
-\label{tab:strengthened}
-% \resizebox{\textwidth}{!}{
-\input{tables/strengthened_augmentation_summary.tex}
-% }
-\end{table}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=.75\textwidth]{strengthened_paired_auprc.png}
-\caption{Paired AUPRC differences between \sepa{} and the corresponding standard generator across shared fold--classifier observations. Error bars are conventional 95\% $t$ intervals and are descriptive because cross-validation folds are not independent replications.}
-\label{fig:strengthened-auprc}
-\end{figure}
-
-The structural diagnostics reveal the trade-off behind selection. For Vigitel smoking, \sepa{} CTGAN improves minority coverage distance from 3.81 to 3.62 but reduces diversity from 7.36 to 6.13. For kidney mortality, coverage improves from 1.74 to 1.65 while diversity falls from 6.91 to 4.09, without meaningful AUPRC improvement. Membership-proxy AUROC remains close to chance. Exact standardized matches are absent for smoking and rare for kidney mortality (0.006\% for \sepa{} CTGAN), but these diagnostics do not establish anonymity.
-
-These results do not support the claim that increasing synthetic separability is generally better. They support a narrower conclusion: within CTGAN candidate pools, separability-aware selection can yield a small average improvement and closer minority coverage, but the gain may come with reduced diversity and can be dominated by simpler frequency-correction methods.
-
-\subsection{Controlled prevalence and overlap}
-\label{sec:controlled-results}
-
-The controlled experiment confirms that prevalence and overlap exert distinct effects on rare-outcome performance. AUPRC increases sharply as separation rises and as the positive class becomes more prevalent. For logistic regression, SepAware-SMOTE exceeds ordinary SMOTE in all 9 prevalence--overlap cells, but the mean differences are small (0.001--0.024). The largest gains occur at 5\% prevalence with moderate or low overlap and at 15\% prevalence with high or moderate overlap; the benefit approaches zero at 30\% prevalence with low overlap (Figure~\ref{fig:controlled-gain}).
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=.75\textwidth]{controlled_overlap_gain.png}
-\caption{Controlled mechanism experiment for logistic regression. Each point is the mean AUPRC difference between SepAware-selected and ordinary SMOTE across 10 independent datasets. Higher class separation indicates less overlap.}
-\label{fig:controlled-gain}
-\end{figure}
-
-In the pooled robust regression including both classifiers, neither the SepAware-SMOTE main contrast nor its interactions with overlap or prevalence were statistically distinguishable from zero (all $P>.91$). The simulation therefore supports the distinction between prevalence and overlap but does not establish a stable region in which separability-aware SMOTE selection is superior. It provides no evidence for imposing the hypothesized inverted-U relationship on the observed health datasets.
-
-\subsection{Summary of the empirical evidence}
-\label{sec:results-summary}
-
-The experiments form a coherent progression. Rebalancing and unconstrained augmentation did not make utility reliably high; domain filters sometimes helped but did not behave monotonically; diagnostic analyses implicated class overlap; \sepa{} then improved Vigitel \tstr{} performance while measured composite fidelity remained broadly stable; and the factorial study attributed that gain to separability rather than to anchors. The COVID-19 null result is equally informative: explicit separability pressure is not sufficient when the positive class is small, heterogeneous, or weakly represented.
-
-The strengthened augmentation results qualify that progression. CTGAN selection improves average AUPRC on COVID-19 and both Vigitel tasks but not kidney mortality; random oversampling remains highly competitive, and TVAE selection is inconsistent. Coverage gains repeatedly accompany lower minority diversity. The evidence therefore does not show that \sepa{} universally recovers clinically meaningful signal; it may instead concentrate easier observations.
+Classifier-by-repetition effects are exported with the primary statistics. Their variation is consistent with the wide corrected intervals for seven of eight primary contrasts. Results from Vigitel obesity and smoking cannot be treated as two independent source replications. The fixed-$\lambda$ grid is retained only as an exploratory development record because configurations were compared on the same folds used for reporting.

@@ -1,0 +1,25 @@
+experiment,transferable,vigitel_obesity,covid_mortality,vigitel_smoking,kidney_mortality,reason_noncompleted,supporting_evidence,next_action,blocks_four_task_claim
+real_only_augmentation,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/predictive_metrics_long.csv,None,no
+random_oversampling,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/predictive_metrics_long.csv,None,no
+random_undersampling,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/predictive_metrics_long.csv,None,no
+smote,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/predictive_metrics_long.csv,None,no
+class_weighted,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/predictive_metrics_long.csv,None,no
+standard_ctgan_augmentation,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/predictive_metrics_long.csv,None,no
+sepaware_ctgan_augmentation,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/predictive_metrics_long.csv,None,no
+standard_tvae_augmentation,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/predictive_metrics_long.csv,None,no
+sepaware_tvae_augmentation,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/predictive_metrics_long.csv,None,no
+standard_ctgan_tstr,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/tstr_fold_metrics.csv,None,no
+sepaware_ctgan_tstr,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/tstr_fold_metrics.csv,None,no
+standard_tvae_tstr,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/tstr_fold_metrics.csv,None,no
+sepaware_tvae_tstr,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/tstr_fold_metrics.csv,None,no
+discrimination_calibration,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/predictive_metrics_long.csv; results/raw/tstr_fold_metrics.csv,None,no
+positive_class_coverage_diversity,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/synthetic_diagnostics_long.csv; results/raw/tstr_diagnostics.csv,None,no
+exact_match,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/synthetic_diagnostics_long.csv; results/raw/tstr_diagnostics.csv,None,no
+membership_proxy,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/synthetic_diagnostics_long.csv; results/raw/tstr_diagnostics.csv,None,no
+common_fidelity,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/raw/tstr_diagnostics.csv,None,no
+corrected_ctgan_primary_contrast,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/statistical_tests/primary_contrasts.csv,None,no
+corrected_tvae_primary_contrast,yes,COMPLETED,COMPLETED,COMPLETED,COMPLETED,,results/statistical_tests/primary_contrasts.csv,None,no
+covid_dacpf,no,NOT_TRANSFERABLE,COMPLETED,NOT_TRANSFERABLE,NOT_TRANSFERABLE,Requires independently specified COVID clinical anchors,results/dataset_specific/covid_dacpf_raw_results.csv,Keep dataset-specific,no
+separability_anchor_factorial,no,COMPLETED,COMPLETED,NOT_TRANSFERABLE,NOT_TRANSFERABLE,Smoking and kidney have no independently prespecified matching anchors,results/factorial/factorial_effects_by_fold.csv,Keep original tasks dataset-specific,no
+controlled_overlap_simulation,no,NOT_TRANSFERABLE,NOT_TRANSFERABLE,NOT_TRANSFERABLE,NOT_TRANSFERABLE,Independent synthetic mechanism simulation rather than a health outcome task,experiments/outputs/controlled_overlap_prevalence_long.csv,Retain outside cross-task averages,no
+reporting_fold_lambda_grid,no,SUPERSEDED,SUPERSEDED,SUPERSEDED,SUPERSEDED,Configuration selected using reporting-fold outcomes,experiments/archive/SepAware_Fixed_Lambda_5Fold_CV_Study.executed.ipynb,Retain only as exploratory history,no
