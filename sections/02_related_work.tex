@@ -1,53 +1,18 @@
 \section{Related Work}
 \label{sec:related-work}
 
-This section positions \sepa{} within four connected areas: synthesis of mixed-type health tables, evaluation beyond aggregate resemblance, rare-outcome learning under imbalance and overlap, and the privacy--utility tension. Each area supplies part of the required evaluation, but their intersection remains underexplored.
+\subsection{Synthetic tabular health data}
 
-\subsection{Synthetic Tabular Health Data}
+Statistical microdata synthesis, graphical models, and copulas generate records from an estimated joint distribution and remain useful when their assumptions are inspectable \citep{raghunathan2003,wang2021}. Generative adversarial networks instead learn through a discriminator--generator game \citep{goodfellow2014}. MedGAN adapted this idea to discrete patient records \citep{choi2017}, while CTGAN introduced mode-specific normalization, conditional vectors, and training-by-sampling for mixed-type tabular data \citep{xu2019}. Those properties make CTGAN a suitable fixed generator for the present question, which concerns curation within a generator rather than comparison between generator families.
 
-Tabular health data represent one person or encounter per row and heterogeneous clinical or survey variables in columns; synthetic microdata are artificial row-level records intended to reproduce selected properties of such data without directly reproducing the source rows. Statistical microdata synthesis predates deep learning. Multiple imputation and probabilistic graphical models generate records from estimated conditional distributions and remain attractive because their assumptions can be inspected \citep{raghunathan2003}. Copulas provide efficient dependence modelling but can struggle when discrete, continuous, multimodal, and rare-event variables interact nonlinearly \citep{wang2021}.
+Synthetic health data are commonly evaluated through resemblance, utility, and disclosure risk \citep{goncalves2020,hernandez2023,kaabachi2025}. Marginal and correlation measures assess selected distributional properties; origin classifiers test multivariate distinguishability; and train-on-synthetic, test-on-real (\tstr{}) evaluation asks whether predictive structure transfers to untouched real observations. No single measure establishes fitness for use. Aggregate fidelity can be dominated by the majority class, and strong downstream classification can result from a narrow set of easy synthetic prototypes rather than adequate representation of positive-class heterogeneity \citep{ghosheh2024,pezoulas2024}.
 
-Generative adversarial networks formulate generation as an adversarial game \citep{goodfellow2014}. MedGAN adapted this approach to high-dimensional discrete patient records \citep{choi2017}, and CTGAN addressed mixed-type tables through mode-specific normalization, conditional vectors, and training-by-sampling \citep{xu2019}. Variational autoencoders optimize a likelihood-related lower bound \citep{kingma2014}; TVAE is a tabular extension evaluated alongside CTGAN \citep{xu2019}. TabDDPM later applied separate diffusion processes to numerical and categorical attributes and outperformed several GAN and VAE comparators on general tabular benchmarks \citep{kotelnikov2023}. These methods improve generation, whereas \sepa{} operates after generation: it tests whether transparent control of the candidate pool's class geometry can improve rare-outcome utility. We use CTGAN and TVAE to examine transfer across two generator families; diffusion remains a future comparator.
+\subsection{Minority-class prediction and operating thresholds}
 
-\subsection{Evaluation Beyond Aggregate Resemblance}
+Imbalanced learning methods alter sample frequency, interpolation, decision costs, or operating thresholds \citep{chawla2002,he2009}. AUPRC is valuable for ranking under unequal prevalence, whereas minority-F1 evaluates classification at one operating point \citep{saito2015}. These endpoints answer different questions. In \tstr{}, the probability scale learned on synthetic records may not transfer to real records, so a fixed threshold of 0.5 can produce almost no positive predictions despite nontrivial ranking information. Threshold selection must therefore be contained within training data and evaluated jointly with calibration.
 
-Health-synthesis studies repeatedly conclude that no single metric establishes usefulness or safety and that evaluation should jointly cover resemblance, downstream utility, and privacy \citep{goncalves2020,hernandez2023,pezoulas2024}. Recent comparisons report dataset- and metric-dependent rankings and a persistent fidelity/utility--privacy trade-off \citep{hernandez2025,nanevski2026}. A review of structured synthetic electronic health records also documents continuing problems with rare events, reproducibility, and privacy evaluation \citep{ghosheh2024}.
+Candidate selection adds a distinct intervention. A generator defines what records are available; a selector determines which available modes and boundary regions are represented in the final training set. An oncology framework has similarly treated synthetic-dataset selection as a multi-dimensional decision rather than assuming that the first generated dataset is fit for purpose \citep{christoforou2025}. Our study differs by holding one candidate pool fixed within each comparison and intervening directly on its selected rows, which permits a cleaner separation of generation from curation.
 
-Univariate fidelity measures whether synthetic columns resemble their real counterparts, pairwise fidelity evaluates dependence structure, and multivariate distinguishability tests whether a classifier separates real from synthetic records \citep{goncalves2020,hernandez2023}. None alone establishes rare-outcome usefulness: aggregate scores can be dominated by negative-class records, whereas a selector can improve classification by producing easy positive prototypes rather than a faithful positive population \citep{ghosheh2024,pezoulas2024}.
+\subsection{Study positioning}
 
-Train-on-Synthetic, Test-on-Real (\tstr{}) evaluation probes whether relations learned from synthetic records transfer to held-out real observations; Real-plus-Synthetic-to-Real evaluation instead tests augmentation \citep{goncalves2020,hernandez2023}. These regimes answer different questions and are reported separately here. Neither constitutes a privacy guarantee or proves unbiased clinical inference.
-
-\subsection{Class Imbalance, Overlap, and Augmentation}
-
-Accuracy can remain high while positive-class recall is poor in imbalanced data \citep{he2009}. Macro-F1 gives both classes equal weight, while AUPRC is often more informative than AUROC for rare positive outcomes \citep{saito2015}. Conventional approaches include random resampling, SMOTE \citep{chawla2002}, cost-sensitive learning, and threshold adjustment \citep{he2009}. These methods alter frequency or decision cost but do not necessarily recover informative class-conditional structure.
-
-A recent comparison across 13 small health datasets found that sampling with replacement could match more complex generative augmentation in several settings, suggesting that some apparent gains arise mainly from increased sample size \citep{huetdastarac2026}. This makes random oversampling a necessary comparator and sharpens our question: does controlling generated class geometry add value beyond correcting sample counts?
-
-Class imbalance and class overlap are related but distinct \citep{he2009}. A rare positive class can remain geometrically well separated, whereas a less imbalanced outcome can be intrinsically difficult because valid observations occupy overlapping feature regions. Adding examples cannot remove irreducible overlap, and aggressively selecting distant examples may improve an empirical boundary by deleting difficult but legitimate cases. We therefore interpret discrimination jointly with calibration and positive-class coverage and diversity.
-
-\subsection{Privacy--Utility Tension}
-
-Synthetic data are not anonymous by construction: high-capacity generators can reproduce or reveal information about training records \citep{yale2019,kaabachi2025}. Privacy can be examined through nearest-record, membership-inference, and attribute-inference analyses or protected through formal mechanisms such as differential privacy \citep{dwork2006}. LDP-GAN combines local differential privacy with medical-record synthesis \citep{kim2024ldpgan}, while a recent oncology framework evaluates candidate synthetic datasets across multiple quality dimensions before downstream use \citep{christoforou2025}. Accordingly, our study reports empirical privacy proxies separately from fidelity and utility and does not equate a near-chance proxy with anonymity.
-
-\subsection{Research Gap and Study Positioning}
-
-Table~\ref{tab:related-comparison} summarizes how representative studies address the dimensions central to this work. The literature leaves a practical gap at the intersection of rare outcomes, explicit class-overlap control, held-out-real augmentation, positive-class coverage, and privacy diagnostics. Generators optimize distribution learning, imbalance methods correct representation or decision cost, and evaluation frameworks generally assess outputs after generation rather than steering class-conditional geometry. Our contribution is not a universally superior generator; it is an auditable intervention and evaluation design for determining when separability-aware selection helps and what it may sacrifice.
-
-\begin{table}[htbp]
-\centering
-\caption{Positioning of representative related work. A checkmark denotes an explicit focus; a dash denotes that the dimension is not the study's primary contribution.}
-\label{tab:related-comparison}
-\small
-\begin{tabularx}{\textwidth}{l*{5}{>{\centering\arraybackslash}X}}
-\toprule
-Study & Health & Rare outcome & Overlap & Utility & Privacy\\
-\midrule
-MedGAN \citep{choi2017} & \checkmark & -- & -- & \checkmark & --\\
-CTGAN/TVAE \citep{xu2019} & -- & -- & -- & \checkmark & --\\
-Health-data evaluation \citep{goncalves2020} & \checkmark & -- & -- & \checkmark & \checkmark\\
-Structured-EHR review \citep{ghosheh2024} & \checkmark & \checkmark & -- & \checkmark & \checkmark\\
-LDP-GAN \citep{kim2024ldpgan} & \checkmark & -- & -- & \checkmark & \checkmark\\
-This study & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
-\bottomrule
-\end{tabularx}
-\end{table}
+The unresolved gap is not whether synthetic data can be scored after generation, but when transparent post-generation curation changes held-out-real minority utility and whether that change survives coverage and calibration checks. \sepa{} addresses this gap through a matched-pool design. Its contribution is an auditable selection operator and an empirical applicability envelope, not a claim that CTGAN or synthetic training is universally preferable to real-data modeling. Privacy is also outside the performance claim: synthetic data are not anonymous by construction, and nearest-record diagnostics cannot replace an explicit attack model or formal guarantee \citep{yale2019,dwork2006}.

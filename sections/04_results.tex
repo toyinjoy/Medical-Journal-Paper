@@ -1,63 +1,38 @@
 \section{Results}
 \label{sec:results}
 
-\subsection{Dataset and protocol overview}
+\subsection{Locked minority-class utility}
 
-The common benchmark included four outcome tasks from three sources. Vigitel obesity and current smoking share the Vigitel source and are not independent cohorts. The analytic samples contained 851 of 5,000 positive obesity records, 83 deaths among 334 COVID-19 admissions, 616 of 5,000 current smokers, and 267 deaths among 5,000 kidney-cohort patients. Every method used the same held-out real folds within a task. The augmentation export contains 1,620 fold--classifier rows (4 tasks, 9 methods, 3 classifiers, 3 repetitions, and 5 folds); no result was aggregated before export.
+All 36 locked method comparisons completed (4 tasks $\times$ 3 generator seeds $\times$ 3 classifiers), with matched CTGAN pools, class quotas, and threshold policies. Table~\ref{tab:locked-primary} gives the primary results. The prespecified operating-regime rule passed: both Vigitel tasks had positive minority-F1 and Macro-F1 differences, at least 6 of 9 paired-model wins, and Holm-adjusted primary $p<.05$.
 
-\subsection{Real-only and conventional imbalance baselines}
+\input{tables/locked_primary_results.tex}
 
-Table~\ref{tab:common-benchmark} reports the full augmentation comparison. Real-only training had the highest mean AUPRC for Vigitel obesity (0.287), Vigitel smoking (0.300), and kidney mortality (0.122). Random oversampling had the highest COVID-19 AUPRC (0.355). Threshold-dependent conclusions differed: for kidney mortality, real-only training had mean positive-class recall below 0.001 at the fixed 0.5 threshold, whereas random undersampling increased recall to 0.617 but increased the Brier score from 0.050 to 0.225. These results show why ranking, classification at a fixed threshold, and calibration are reported separately.
+For Vigitel obesity, minority-F1 increased from 0.199 to 0.311 (difference 0.112, 95\% CI 0.074--0.150), and for current smoking it increased from 0.134 to 0.276 (difference 0.143, 95\% CI 0.096--0.190). Both effects occurred in all nine seed--classifier pairs. The corresponding Macro-F1 differences were 0.067 and 0.090, and AUPRC differences were 0.082 and 0.130.
 
-\input{tables/common_benchmark_primary.tex}
+COVID-19 minority-F1 changed by 0.006 with a wide interval spanning material benefit and harm. Its Macro-F1 increased by 0.089, but only five of nine minority-F1 pairs favored \sepa{}; the primary classification claim was therefore not supported. Kidney minority-F1 increased by 0.056 and favored \sepa{} in eight of nine pairs, but the four-test Holm adjustment gave $p=.057$. Kidney Macro-F1 changed by only 0.009. These two outcomes are boundary conditions rather than required wins.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=.96\textwidth]{common_benchmark_auprc.pdf}
-\caption{Held-out-real AUPRC in the augmentation regime. Bars are means over 3 repeated 5-fold partitions and 3 classifiers. Methods within each task use identical test folds; corrected paired comparisons are shown in Figure~\ref{fig:primary-contrasts}.}
-\label{fig:common-auprc}
-\end{figure}
+\subsection{Decision thresholds and calibration}
 
-\subsection{Standard generators and \sepa{} selection}
+The learned thresholds differed from 0.5 in every task. Mean Standard/\sepa{} thresholds were 0.221/0.307 for COVID-19, 0.085/0.126 for kidney mortality, 0.187/0.255 for obesity, and 0.153/0.281 for smoking. These values show that synthetic-to-real classification involved a substantial probability-scale shift even though threshold choice never used real labels.
 
-For CTGAN, mean AUPRC differences between \sepa{} and standard sampling were 0.012 for COVID-19, 0.009 for Vigitel obesity, 0.031 for Vigitel smoking, and 0.005 for kidney mortality. The Nadeau--Bengio corrected intervals were $[-0.055,0.079]$, $[-0.004,0.021]$, $[0.015,0.048]$, and $[-0.007,0.017]$, respectively. Only smoking remained significant after Holm adjustment ($p_{\mathrm{adj}}=.009$). TVAE differences ranged from $-0.007$ to 0.003, and all corrected intervals included zero. The inferential unit was the mean difference across classifiers within each repeated-CV fold ($n=15$ fold summaries per contrast), not 45 fold--classifier observations.
+Classification gains did not imply calibrated risk estimates. Brier score worsened by 0.031 for obesity and 0.036 for smoking; ECE worsened by 0.099 and 0.085. ECE also increased for COVID-19 and kidney mortality. The confirmed Vigitel result is therefore an improvement in minority detection at a training-derived operating point, not evidence of probability calibration.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=.82\textwidth]{primary_contrasts.pdf}
-\caption{Primary paired AUPRC contrasts in real-plus-synthetic augmentation. Points are mean \sepa{} minus standard-generator differences; intervals use the Nadeau--Bengio repeated-cross-validation correction. Eight task--generator tests were adjusted together by Holm's method.}
-\label{fig:primary-contrasts}
-\end{figure}
+\subsection{Selection mechanism}
 
-The selected CTGAN condition did not surpass the strongest conventional method on any task. Its mean AUPRC was 0.323 for COVID-19, 0.256 for Vigitel obesity, 0.249 for Vigitel smoking, and 0.110 for kidney mortality. The corresponding best conventional values were 0.355, 0.287, 0.300, and 0.122. SepAware therefore improved one generator comparison reliably without establishing superiority over simpler training strategies.
+Selected rows differed substantially from quota-matched Standard CTGAN rows. Before diversity repair, minority-selection overlap was close to random expectation in all four tasks. Progressive replacement changed held-out utility while the generator and pool remained fixed (Table~\ref{tab:mechanism}). For Vigitel obesity and smoking, replacing Standard rows with curated rows increased TSTR minority-F1 by 0.132 and 0.174, respectively. COVID-19 also showed a positive development-stage replacement effect, but this did not reproduce as a locked primary effect. Kidney showed partial selection benefit under a strong generator and diversity constraint.
 
-\subsection{TSTR utility}
-\label{sec:tstr-results}
+\input{tables/mechanism_summary.tex}
 
-The common TSTR experiment trained each classifier only on a synthetic dataset whose class counts matched the corresponding real training fold and evaluated on the untouched real test fold. Standard and selected variants shared candidate pools. Table~\ref{tab:tstr-summary} reports all tasks and both generators; these substitution results are kept separate from augmentation.
+The kidney result clarifies the role of the diversity repair. Pure Pareto selection shared 1.03\% of minority rows with Standard CTGAN but retained only 57.6\% of Standard diversity. The frozen repair consequently restored Standard-selected rows in every kidney block, replacing an average of 55\% of the final minority subset and raising final overlap to 55.5\%. The final kidney method was therefore a heavily repaired hybrid, which limited the contrast between training sets.
 
-\input{tables/tstr_summary.tex}
+\subsection{Coverage and distributional trade-offs}
 
-For CTGAN, selection increased mean TSTR AUPRC from 0.279 to 0.333 for COVID-19, 0.191 to 0.279 for Vigitel obesity, 0.139 to 0.279 for smoking, and 0.063 to 0.080 for kidney mortality. TVAE changes were smaller and mixed: 0.332 to 0.324, 0.223 to 0.200, 0.183 to 0.179, and 0.102 to 0.100, respectively. These are descriptive substitution results and do not replace the prespecified augmentation contrasts.
+Across the five saved diagnostic folds, curation increased local $k$-nearest-neighbor precision from 0.611 to 0.988 for COVID-19, 0.315 to 0.552 for kidney mortality, 0.437 to 0.870 for obesity, and 0.599 to 0.803 for smoking. At the same time, $k$-nearest-neighbor recall decreased from 0.943 to 0.804, 0.898 to 0.789, 0.839 to 0.729, and 0.874 to 0.727, respectively. Rare-mode coverage decreased in all four tasks.
 
-\subsection{Calibration, coverage, diversity, fidelity, and privacy diagnostics}
+This pattern is consistent with prototype concentration: the selected cases are more locally plausible, but they span less of the positive-class support. The Vigitel gains occurred despite worse coverage, so broader support did not mediate their classification improvement. In kidney mortality, coverage of high erythropoietin-count profiles fell from 0.770 under Standard CTGAN to 0.558 under \sepa{}, although the shared pool reached 0.816. Some clinically relevant trajectories were therefore available at generation but lost during curation.
 
-In augmentation, CTGAN selection reduced positive-class coverage distance for every task: from 4.410 to 4.115 for COVID-19, 1.977 to 1.723 for Vigitel obesity, 3.833 to 3.586 for smoking, and 1.744 to 1.595 for kidney mortality. It also reduced within-positive-class diversity from 11.332 to 7.888, 5.478 to 4.356, 7.340 to 6.310, and 6.827 to 4.425, respectively. Thus closer coverage was consistently accompanied by a more concentrated selected sample.
+\subsection{Generator-budget sensitivity}
 
-In augmentation, exact-match rates were zero or below 0.0005, and membership-proxy AUROCs ranged from 0.499 to 0.508 for standard and selected CTGAN. In TSTR, kidney TVAE had much higher exact-match rates: 0.105 for standard TVAE and 0.134 after selection. TSTR detection AUROC was also high for several conditions, reaching 0.995--0.998 for kidney CTGAN and at least 0.979 for kidney TVAE. These results show readily detectable distributional differences and, for kidney TVAE, material duplication risk. Membership-proxy AUROCs remained near 0.5, but none of these measures establishes anonymity. The full marginal similarity, correlation similarity, detection, coverage, diversity, exact-match, and membership-proxy matrix is provided as a machine-readable supplementary table.
+The epoch study showed that curation advantage and generator maturity are not interchangeable. Thirty epochs were sufficient for the tested COVID-19 endpoints and did not explain its instability. Longer kidney training did not rescue augmentation and produced substantial duplication and exact-training-row matches at 300--1,024 epochs. For Vigitel obesity, Standard CTGAN improved strongly by 300 epochs, narrowing the curation advantage. For smoking TSTR, Standard Macro-F1 increased from 0.486 at 30 epochs to 0.605 at 1,024 epochs and matched \sepa{} at 1,024 (difference $-0.001$). In smoking augmentation, a smaller \sepa{} advantage persisted.
 
-\subsection{Dataset-specific anchor and factorial analyses}
-
-Clinical-anchor analyses were not part of the common benchmark. The COVID-19 DACPF experiment required age, cancer, and respiratory-admission variables; comparable anchors were not prespecified for smoking or kidney mortality. Applying invented substitutes after seeing the data would have introduced outcome-guided tuning.
-
-In the five-fold COVID-19 DACPF augmentation run, disease-anchor filtering produced mean Macro-F1 of 0.577 for CatBoost and 0.534 for XGBoost, compared with 0.526 for each classifier under standard CTGAN augmentation. Age-only and combined filters did not improve on standard augmentation. The result is dataset- and classifier-specific.
-
-The blocked $2^2$ anchor-by-separability TSTR analysis was likewise limited to Vigitel obesity and COVID-19. The fold-paired Vigitel separability effect was 0.102 Macro-F1 (95\% CI 0.077--0.128; exploratory $p<.001$). The COVID-19 estimate was $-0.018$ (95\% CI $-0.063$--0.027; $p=.332$). Anchor and interaction intervals included zero for both tasks. Overlapping training folds and shared candidate pools limit these exploratory intervals; they are not independent replications.
-
-\subsection{Controlled simulation}
-
-The simulation varied prevalence and class overlap independently and is not counted as a health-data task. SepAware-SMOTE exceeded ordinary SMOTE in each of nine prevalence--overlap cells for logistic regression, but mean differences were small (0.001--0.024). In pooled heteroscedasticity-robust regression, neither the method contrast nor its overlap and prevalence interactions was distinguishable from zero (all $p>.91$). The simulation therefore supports separating prevalence from overlap but does not locate a stable region in which selection improves predictive performance.
-
-\subsection{Sensitivity and statistical interpretation}
-
-Classifier-by-repetition effects are exported with the primary statistics. Their variation is consistent with the wide corrected intervals for seven of eight primary contrasts. Results from Vigitel obesity and smoking cannot be treated as two independent source replications. The fixed-$\lambda$ grid is retained only as an exploratory development record because configurations were compared on the same folds used for reporting.
+Thus, part of the low-budget effect is efficient recovery of structure already latent in an imperfect candidate pool. It should not be interpreted as unconditional superiority over a fully trained generator. Conversely, additional training did not solve the COVID-19 information constraint or the kidney sparse-trajectory problem.

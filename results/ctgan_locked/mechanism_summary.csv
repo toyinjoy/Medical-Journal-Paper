@@ -1,0 +1,5 @@
+dataset,pool_coverage,selection_jaccard,replacement_delta_macro_f1_tstr,replacement_delta_minority_f1_tstr,mechanism_interpretation
+covid,0.971,0.078,0.080,0.077,adequate_pool_but_unstable_locked_transfer
+kidney_mortality,0.969,0.402,-0.010,0.082,partial_selection_benefit_constrained_by_sparse_structure_and_repair
+vigitel,0.894,0.084,0.084,0.132,adequate_pool_and_consistent_selection_effect
+vigitel_smoking,0.988,0.019,0.107,0.174,adequate_pool_and_strong_selection_effect

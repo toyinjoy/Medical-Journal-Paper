@@ -21,6 +21,10 @@ comments so the paper source contains only scientific text.
   patient-level source data are published.
 - Convert the final manuscript from the retained `elsarticle` working shell to the
   then-current JMIR submission format and verify the relevant reporting checklist.
+- Supply a public, accepted, or otherwise citable reference for the preceding study
+  that selected CTGAN over the other development candidates. Until that reference
+  is verified, the paper describes CTGAN as fixed by prior internal development and
+  does not make a published comparative-superiority claim.
 - Obtain clinical review of the kidney landmark, event-code groupings, follow-up
   assumption, and interpretation as recorded 365-day mortality.
 - Remaining analyses from the advisor email: stronger attribute/membership attacks,

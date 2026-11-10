@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+\centering
+\caption{Saved-pool mechanism evidence. Pool coverage is the fraction of real positive profiles reached by the shared candidate pool. Replacement effects are changes after progressively substituting Standard-selected with \sepa{}-selected rows; they are mechanism estimates on development partitions, not locked confirmation.}
+\label{tab:mechanism}
+\small
+\begin{tabularx}{\textwidth}{Xrrrr}
+\toprule
+Task & Pool coverage & Selection Jaccard & $\Delta$Macro-F1 & $\Delta$minority-F1\\
+\midrule
+COVID-19 mortality & .971 & .078 & .080 & .077\\
+Kidney mortality & .969 & .402 & $-.010$ & .082\\
+Vigitel obesity & .894 & .084 & .084 & .132\\
+Vigitel smoking & .988 & .019 & .107 & .174\\
+\bottomrule
+\end{tabularx}
+\end{table}

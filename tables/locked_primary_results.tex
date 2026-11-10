@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+\centering
+\caption{Internal locked TSTR results. Differences are \sepa{} minus matched Standard CTGAN. Confidence intervals are feature-group bootstrap intervals; $p$ values are Holm-adjusted across the four primary minority-F1 comparisons.}
+\label{tab:locked-primary}
+\small
+\begin{tabularx}{\textwidth}{Xrrrrrr}
+\toprule
+Task & Standard F1 & \sepa{} F1 & Difference (95\% CI) & Holm $p$ & Wins/9 & $\Delta$ECE\\
+\midrule
+COVID-19 mortality & .341 & .347 & .006 ($-.121$, .131) & .925 & 5 & .057\\
+Kidney mortality & .062 & .118 & .056 (.013, .107) & .057 & 8 & .038\\
+Vigitel obesity & .199 & .311 & .112 (.074, .150) & $<.001$ & 9 & .099\\
+Vigitel smoking & .134 & .276 & .143 (.096, .190) & $<.001$ & 9 & .085\\
+\bottomrule
+\end{tabularx}
+\end{table}

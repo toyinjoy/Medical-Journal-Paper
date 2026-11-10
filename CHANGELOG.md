@@ -1,5 +1,22 @@
 # Scientific and editorial changelog
 
+## 2026-11-09: CTGAN-only journal-paper reframing
+
+### Scientific scope
+
+- Fixed CTGAN as study infrastructure and removed generator-family comparison from the active manuscript evidence chain.
+- Reframed the causal contrast as matched-pool post-generation curation: Standard CTGAN versus SepAware selection from the same candidate pool, with identical quotas, downstream models, and synthetic-training-only threshold policy.
+- Adopted Generate--Curate--Decide as Figure 1 and the conceptual spine of the introduction, methods, results, and discussion.
+- Centered the paper on the conditional novelty: curation can concentrate decision-useful minority prototypes, but gains depend on candidate-pool adequacy and may trade off coverage, diversity, calibration, or generator-training budget.
+
+### Manuscript and evidence
+
+- Rewrote the title, abstract, introduction, related work, methods, results, discussion, limitations, and conclusion around the locked CTGAN-only study.
+- Added compact locked primary, inference, mechanism, coverage, calibration, and epoch-sensitivity evidence.
+- Moved detailed algorithms and audit material to a standalone supplement so the main manuscript can remain within the 15-page cap.
+- Preserved historical generator-comparison outputs as excluded audit material rather than deleting completed research evidence.
+- Added an unresolved author item for the citable version of the preceding CTGAN development study; no unverified self-citation was invented.
+
 ## 2026-09-17: submission-readiness rebuild in progress
 
 ### Audited

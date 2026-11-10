@@ -1,30 +1,30 @@
 \section{Supplementary Methods and Results}
 \label{app:audit}
 
-\subsection{Output hierarchy}
+\subsection{Evidence hierarchy}
 
-Fold-level augmentation results are stored in \path{results/raw/predictive_metrics_long.csv}; TSTR results are stored in \path{results/raw/tstr_fold_metrics.csv}. Diagnostic files use the same task, repetition, fold, and condition keys. Aggregate tables are generated from these files and are not edited manually. The experiment manifest records source hashes, features, exclusions, cohort construction, seeds, generator settings, metrics, and task-specific applicability.
+The paper's confirmatory evidence is the locked CTGAN-only TSTR comparison. Earlier repeated-cross-validation augmentation, factorial, generator-development, and architecture-screening studies are development history and are not pooled with the lock. Historical raw outputs remain in the repository audit trail, but comparisons of generator families are outside the scope of this paper.
 
-The common benchmark contains real-only training, random over- and undersampling, SMOTE, class weighting, standard and selected CTGAN, and standard and selected TVAE in augmentation. TSTR contains the four generator conditions. The full metric matrix includes AUPRC, AUROC, Macro-F1, positive-class F1, precision, recall, balanced accuracy, Brier score, calibration intercept, and calibration slope. Machine-readable summaries are in \path{results/tables/augmentation_metric_summary.csv} and \path{results/tables/tstr_metric_summary.csv}.
+\subsection{Robust scaling and Pareto ordering}
 
-\subsection{Repeated-cross-validation inference}
+For a score vector $z$, the robust transformation uses center $\operatorname{median}(z)$ and spread $1.4826\operatorname{median}|z-\operatorname{median}(z)|$. If the spread is degenerate, the interquartile range divided by 1.349 is used; a second degeneracy maps all values to 0.5. Robust $z$ values are clipped to $[-3,3]$ and mapped to $[0,1]$.
 
-For each task and generator, SepAware and standard observations are paired by repetition, fold, and classifier. Classifier differences are averaged within a fold before inference. If $\bar d$ and $s_d^2$ are the mean and variance of the 15 fold summaries, the corrected standard error is
-\begin{equation}
-\operatorname{SE}_{\mathrm{NB}}=\sqrt{\left(\frac{1}{15}+\frac{n_{test}}{n_{train}}\right)s_d^2},
-\end{equation}
-with $n_{test}/n_{train}=0.25$ for five-fold cross-validation. Two-sided $t$ intervals use 14 degrees of freedom. Holm adjustment is applied across the eight prespecified task--generator contrasts. This correction addresses overlap approximately; it does not make internal folds equivalent to independent cohorts.
+The final selector discretizes realism, separability, and profile compatibility to 100 bins per axis. An occupied grid cell dominates another when it is no worse on every objective and better on at least one. Candidates are ordered by the number of occupied dominating cells, then by descending objective values and stable input order. This is a deterministic epsilon-Pareto approximation rather than exact continuous nondominated sorting.
 
-\subsection{Fidelity and disclosure-risk diagnostics}
+\subsection{Threshold policy}
 
-Numerical marginal similarity is one minus the Kolmogorov--Smirnov distance; categorical similarity is one minus total-variation distance. Marginal similarity averages these feature-level values. Correlation similarity is one minus half the mean absolute difference between real and synthetic correlation matrices over the imputed numeric and numeric-coded categorical fields. Detection AUROC comes from a classifier distinguishing real training records from synthetic records; 0.5 indicates chance discrimination and values farther from 0.5 indicate easier detection.
+Each classifier generates grouped three-fold out-of-fold probabilities on the selected synthetic training set. Candidate thresholds are the 1st--99th probability quantiles and 0.5. Thresholds predicting positives at less than one half or more than twice the training prevalence are excluded. Minority-F1, balanced accuracy, and proximity to 0.5 define the lexicographic choice. If no threshold is eligible, the procedure falls back to 0.5.
 
-Coverage is the mean distance from each held-out positive record to its nearest synthetic positive record. Diversity is the mean pairwise distance among at most 1,000 synthetic positive records. Exact-match rate is the synthetic fraction at zero encoded distance from a real training record. The membership proxy classifies real training versus held-out records using nearest-synthetic distance. None of these metrics provides a formal privacy guarantee.
+\subsection{Locked inference}
 
-\subsection{Dataset-specific analyses}
+The primary statistic is the mean minority-F1 difference over three generator seeds and three classifiers. A joint prediction-swap permutation independently exchanges the paired Standard and \sepa{} predictions within fitted-model pair and recomputes the statistic. Feature-group bootstrap resampling preserves exact-profile groups. Both procedures are conditional on the fitted models. Holm correction covers the four task-level primary tests.
 
-The COVID-19 DACPF files are stored in \texttt{results/dataset\_specific/}. The factorial fold responses, effects, assumption diagnostics, and correlation analyses are stored in \texttt{results/factorial/}. These analyses are not averaged with common-benchmark results. No clinical-anchor experiment was created for smoking or kidney mortality because independently justified anchor definitions were unavailable.
+\subsection{Mechanism and sensitivity evidence}
 
-\subsection{Excluded and superseded evidence}
+The progressive replacement study uses the same saved pool and exact candidate identifiers. It moves from Standard-selected toward \sepa{}-selected rows while preserving class quotas, then refits the downstream classifier. Candidate-pool coverage, final-set overlap, distributional diagnostics, and prediction changes are stored separately so overlap is not treated as a utility metric.
 
-Single-split development notebooks, failed TabPFN runs, and protocols without successful outputs are excluded from numerical claims. The reporting-fold fixed-$\lambda$ search is retained as exploratory development evidence but is superseded for the common benchmark by the fixed manifest setting. The repository audit and task-by-experiment matrix give the status and rationale for every identified experiment.
+The epoch study contains 240 development CTGAN cells (4 tasks $\times$ 4 epoch budgets $\times$ 5 folds $\times$ 3 generator seeds) plus 48 retrospective locked-sensitivity cells. The development analysis is primary for budget sensitivity; the previously used lock is descriptive in this stage.
+
+\subsection{Excluded claims}
+
+The study does not claim external validation, generator-family superiority, calibrated clinical risk, causal preservation, formal privacy, or safe public release. Earlier multi-generator outputs are retained for auditability but do not contribute to the title, abstract, tables, inference, or conclusions of this manuscript.

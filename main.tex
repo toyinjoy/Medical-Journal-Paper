@@ -15,22 +15,18 @@
 \usepackage{float}
 \usepackage{placeins}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,fit}
+\usetikzlibrary{arrows.meta,positioning,fit,shapes.geometric}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[colorlinks=true,allcolors=blue]{hyperref}
 \setlength{\emergencystretch}{2em}
 
 \graphicspath{{figures/}}
 \newcommand{\sepa}{\textsc{SepAware}}
-\newcommand{\dacpf}{\textsc{DACPF}}
 \newcommand{\tstr}{\textsc{TSTR}}
-\newcommand{\trtr}{\textsc{TRTR}}
-\newcommand{\ra}{Real$\rightarrow$Real}
 \newcommand{\sr}{Synthetic$\rightarrow$Real}
-\newcommand{\rsr}{Real+Synthetic$\rightarrow$Real}
 \newcommand{\NA}{--}
 
-\title{Separability-Aware Synthetic Data Selection for Rare-Outcome Prediction in Health Data}
+\title{Separability-Aware Curation of Synthetic Health Data:\\Conditional Utility, Coverage, and Calibration in Minority-Class Prediction}
 \author{Oluwatoyin Joy Omole$^{1}$\\
 \small $^{1}$Graduate Program in Computer Science, Universidade Federal de Minas Gerais, Belo Horizonte, Brazil}
 \date{}
@@ -39,18 +35,18 @@
 \maketitle
 
 \begin{abstract}
-\textbf{Background:} Synthetic data are used to increase positive-class sample size in rare-outcome prediction, but additional records may not improve prediction when classes overlap or generation fails to preserve class-conditional structure.
+\textbf{Background:} Synthetic health data may support model development when real records cannot leave a trusted environment, but a generator can produce a large candidate pool without preserving the class-conditional structure required for minority-case detection. Evaluation commonly treats generation as the final step and does not isolate the effect of curating which synthetic records are retained.
 
-\textbf{Objective:} We tested whether post-generation control of class separability improves held-out-real utility beyond class-frequency correction and whether any gain is accompanied by reduced positive-class diversity.
+\textbf{Objective:} We tested when separability-aware post-generation curation improves train-on-synthetic, test-on-real minority classification relative to matched standard sampling, and whether gains are accompanied by losses in coverage or calibration.
 
-\textbf{Methods:} \sepa{} ranks an oversized synthetic candidate pool using nearest-real proximity, nearest-hit/nearest-miss margin, and probability from a real-trained classifier while preserving prespecified class counts. We evaluated Vigitel obesity, COVID-19 hospital mortality, Vigitel current smoking, and kidney-cohort 365-day mortality; the two Vigitel tasks share one source. Three repeated 5-fold partitions compared real-only training, random over- and undersampling, SMOTE, class weighting, CTGAN, TVAE, and their selected variants. AUPRC was the primary augmentation endpoint. TSTR, calibration, fidelity, positive-class coverage and diversity, exact matches, and a membership proxy were reported separately. Primary paired tests used a corrected repeated-cross-validation procedure and Holm adjustment.
+\textbf{Methods:} We organized the study as Generate--Curate--Decide. A fixed conditional tabular generative adversarial network (CTGAN) produced a five-times class-conditional candidate pool. \sepa{} curated records using epsilon-Pareto ordering of class-conditional realism, cross-fitted separability, and prespecified profile compatibility, followed by a diversity repair requiring at least 80\% of matched standard-sampling diversity. Logistic regression, random forest, and CatBoost learned operating thresholds from grouped out-of-fold predictions on synthetic training data only. Four outcome tasks were evaluated: Vigitel obesity, COVID-19 hospital mortality, Vigitel current smoking, and kidney-cohort 365-day mortality; the Vigitel tasks share one source. The candidate, endpoint, and inference plan were frozen before the internal locked outcomes were accessed. Minority-class F1 was primary; Macro-F1, AUPRC, calibration, coverage, and diversity were secondary.
 
-\textbf{Results:} Mean AUPRC differences between \sepa{} and standard CTGAN were 0.012 for COVID-19, 0.009 for Vigitel obesity, 0.031 for Vigitel smoking, and 0.005 for kidney mortality. Only smoking excluded zero after repeated-cross-validation correction and Holm adjustment (95\% CI 0.015--0.048; adjusted $p=.009$). All four TVAE intervals included zero. Selected CTGAN did not exceed the strongest conventional comparator on any task. CTGAN selection reduced positive-class coverage distance in every task but also reduced diversity. Exact-match rates were at most 0.0005 and membership-proxy AUROCs were near 0.5; these are not privacy guarantees.
+\textbf{Results:} Locked minority-F1 differences were 0.006 for COVID-19 (95\% CI $-0.121$ to 0.131; Holm $p=.925$), 0.056 for kidney mortality (0.013 to 0.107; $p=.057$), 0.112 for Vigitel obesity (0.074 to 0.150; $p<.001$), and 0.143 for Vigitel smoking (0.096 to 0.190; $p<.001$). Both Vigitel effects won all 9 generator-seed--classifier pairs and were accompanied by Macro-F1 and AUPRC gains. Expected calibration error increased by 0.099 and 0.085, respectively. In saved-pool diagnostics, curation increased local minority precision but reduced nearest-neighbor recall and rare-mode coverage in all four tasks. Progressive replacement of standard-selected rows with \sepa{} rows changed held-out utility without regenerating the pool, supporting a selection effect while identifying COVID-19 and kidney mortality as boundary conditions.
 
-\textbf{Conclusions:} Class-boundary control differs from class balancing, but the evidence supports a generator-relative augmentation gain only for the smoking task. Selection should be compared with simple baselines and assessed for calibration and loss of positive-class heterogeneity. Internal cross-validation does not establish clinical benefit, transportability, or privacy.
+\textbf{Conclusions:} Post-generation curation can recover decision-useful minority prototypes when the candidate pool contains adequate class-conditional structure, but it is not a universal improvement and does not produce calibrated risk estimates. Utility must be interpreted jointly with support coverage, diversity, and training-budget sensitivity. This internal locked study does not establish external transportability, clinical benefit, or privacy.
 \end{abstract}
 
-\noindent\textbf{Keywords:} synthetic health data; tabular data; class imbalance; class overlap; rare outcomes; data augmentation; privacy; calibration
+\noindent\textbf{Keywords:} synthetic health data; tabular data; minority-class prediction; candidate selection; CTGAN; train on synthetic test on real; calibration
 
 \input{sections/01_introduction}
 \input{sections/02_related_work}
@@ -66,17 +62,11 @@
 \item[AUPRC] area under the precision-recall curve
 \item[AUROC] area under the receiver operating characteristic curve
 \item[CTGAN] conditional tabular generative adversarial network
-\item[HM] hypothesis margin
-\item[SI] separability index
-\item[SMOTE] synthetic minority oversampling technique
+\item[ECE] expected calibration error
 \item[TSTR] train on synthetic, test on real
-\item[TVAE] tabular variational autoencoder
 \end{description}
 
 \bibliographystyle{unsrtnat}
 \bibliography{references}
-
-\appendix
-\input{sections/09_supplementary}
 
 \end{document}

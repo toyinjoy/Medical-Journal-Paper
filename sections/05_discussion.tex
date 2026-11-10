@@ -1,38 +1,34 @@
 \section{Discussion}
 \label{sec:discussion}
 
-\subsection{Interpretation of the common benchmark}
+\subsection{Principal finding}
 
-SepAware selection produced a corrected AUPRC gain over standard CTGAN for Vigitel smoking. The other three CTGAN intervals and all four TVAE intervals included zero after accounting for repeated-cross-validation dependence, and the selected generator did not exceed the strongest conventional method on any task. The result is narrower than a claim that separability-aware generation improves rare-outcome prediction: selection can improve a specific candidate pool, but it did not displace real-only training or resampling as the practical reference.
+The central finding is conditional rather than universal. With CTGAN, quotas, classifiers, and threshold policy held constant, Pareto curation improved locked minority-F1, Macro-F1, and AUPRC for the two Vigitel outcomes. It did not establish a primary benefit for COVID-19 or kidney mortality. The two positive tasks share a surveillance source and therefore define one observed operating regime rather than two independent external replications.
 
-The distinction between TSTR and augmentation is material. TSTR asks whether a synthetic dataset retains enough information to replace real training data. Augmentation asks whether synthetic positive records add information when the real observations remain available. A method can improve substitution utility relative to its generator while adding little in augmentation. We therefore report the regimes separately and avoid averaging across them.
+The Generate--Curate--Decide decomposition explains why this is more than a generator comparison. The shared pool determines what information is available. Curation alters how that information is represented, and the training-only threshold converts the resulting probability ranking into classifications. The progressive replacement experiment provides direct evidence that selected rows affect utility, while the epoch study shows that stronger generation can reduce the selection advantage. Neither generation quality nor curation alone determines the final result.
 
-The two Vigitel outcomes share a source. Agreement between their estimates may reflect common measurement, preprocessing, or population structure and cannot be interpreted as replication in an independent cohort. COVID-19 mortality has a small sample and broad uncertainty; kidney mortality has lower prevalence and a longitudinally derived feature set. This heterogeneity is useful for observing failure, but four outcome tasks do not establish transportability.
+\subsection{Why curation helps}
 
-\subsection{Selection, coverage, and diversity}
+The diagnostic pattern supports selection of locally plausible, decision-useful prototypes rather than general distributional improvement. Local precision increased while recall and rare-mode coverage decreased in every task. In the successful Vigitel regime, this concentration improved minority precision and recall at the learned threshold sufficiently to raise F1. It did not make every marginal distribution closer to real data and did not preserve the full positive-class support.
 
-CTGAN selection moved synthetic positive records closer to held-out positive observations in every task. At the same time, pairwise diversity decreased in every task. These changes are compatible with two explanations: the selector may retain clearer class-conditional signal, or it may discard legitimate boundary cases. The available labels cannot determine which removed variation is measurement noise, redundant spread, or clinically meaningful heterogeneity.
+This distinction is important for synthetic health data. A curated training set can be useful for a discrimination task without being a faithful synthetic population for epidemiologic estimation, descriptive statistics, subgroup analysis, or release. The acceptable balance depends on intended use. If the objective is minority-case screening, a controlled reduction in redundant or noisy support may be tolerable. If the objective is calibrated risk, phenotype discovery, or population representation, the observed ECE and coverage losses may invalidate the method.
 
-The kidney task illustrates the limitation. Coverage distance improved and diversity declined, yet its corrected CTGAN AUPRC interval included zero and real-only training retained the highest mean AUPRC. Geometry changed as designed without producing a demonstrated ranking benefit. A useful deployment criterion must therefore include predictive performance against simple baselines, calibration, and clinically interpretable coverage rather than the composite selection score alone.
+\subsection{Boundary conditions}
 
-TVAE also shows dependence on candidate-pool quality. Under SDV 1.17.2, class-specific models were required because native outcome-conditional sampling was unavailable. Their positive-class diversity was low, and subsequent selection did not create information absent from the pool. The scoring rule can be applied to different generators, but its benefit is not generator independent.
+COVID-19 combined 83 positive outcomes with 33 predictors. Its curation effects varied across generator seeds and classifiers, consistent with insufficient effective positive information for stable geometry and profile estimation. Stronger selection pressure cannot create information that the cohort does not contain. Dimensionality reduction or more events is preferable to further tuning on the same 334 records.
 
-\subsection{Dataset-specific mechanism evidence}
+Kidney mortality combined 5.3\% prevalence, sparse zero-heavy event counts, and extensive repeated feature profiles. The shared candidate pool contained some underrepresented high-count trajectories, but the curator removed them disproportionately. Pure Pareto selection also failed the diversity floor, causing the final set to restore Standard rows heavily. A count-aware or longitudinal generator and a separate calibration strategy are more plausible next steps than stronger post-generation selection.
 
-The Vigitel-obesity factorial estimate attributes a Macro-F1 change to separability weighting within that executed design; the corresponding COVID-19 interval includes zero. The factorial results reuse overlapping folds and shared candidate pools, so their small-sample intervals are exploratory. The anchor component is also task-specific. COVID-19 anchors were defined from available clinical variables, whereas defensible analogues were not prespecified for smoking or kidney mortality. Extending those anchors by analogy after observing outcomes would weaken, not strengthen, the comparison.
-
-The controlled simulation separates overlap from prevalence but does not show a significant method-by-overlap interaction. It supports the design premise that imbalance and overlap are different properties; it does not establish a threshold at which SepAware should be used.
-
-\subsection{Calibration and operating thresholds}
-
-The kidney results show that a model can have useful ranking while predicting no positives at a fixed 0.5 threshold. Undersampling increased recall but substantially worsened the Brier score. Threshold selection should therefore depend on the intended clinical operating point and asymmetric error costs. This study fixed the threshold and did not tune it on test folds; it does not recommend a deployment threshold.
-
-\subsection{Privacy interpretation}
-
-Augmentation exact-match rates were low, but standalone kidney TVAE data had exact-match rates of 10.5\% under standard sampling and 13.4\% after selection. Several real-versus-synthetic detection AUROCs were also close to one. These findings argue against releasing those synthetic data. Membership-proxy AUROCs near 0.5 do not offset that concern: the proxy attacker uses nearest-synthetic distance and does not represent stronger shadow-model, linkage, or attribute-inference attacks. Disclosure risk must be assessed under an explicit attacker model before any synthetic records are released.
+Generator budget is a third condition. On both Vigitel tasks, Standard CTGAN improved with longer training and sometimes narrowed or removed the curation advantage. Curation is therefore partly an information-recovery and efficiency mechanism for finite-budget pools. A compute-matched study would be required before claiming computational efficiency; the present results only establish training-budget sensitivity.
 
 \subsection{Relation to prior work}
 
-The competitiveness of random oversampling agrees with evidence that sampling with replacement can match more complex augmentation in small-data settings \citep{huetdastarac2026}. Our results add a within-generator comparison: selecting candidates can change utility and geometry without making synthetic augmentation the best strategy. Evaluation frameworks that separate fidelity, utility, and privacy are therefore more informative than a single global quality score \citep{hernandez2025,nanevski2026}.
+The competitiveness of simple resampling in health data has led to warnings that sophisticated synthesis may add sample count without adding information \citep{huetdastarac2026}. Our result refines that argument: even within one generator fit, downstream utility can depend materially on which candidates are retained. At the same time, the loss of support agrees with broader recommendations to evaluate synthetic data through multiple dimensions rather than a single global score \citep{hernandez2025,nanevski2026}.
 
-The study supports treating separability as a measurable intervention rather than an assumed virtue. Its practical value depends on the task, generator, candidate pool, classifier, and acceptable loss of positive-class heterogeneity. External validation and phenotype-aware coverage analyses are needed before the method can support a clinical claim.
+CTGAN was fixed based on earlier development evidence rather than selected from the locked outcomes. This paper therefore makes no cross-generator claim. Its novelty lies in matched-pool curation, decision-transfer control, and failure analysis. This positioning also avoids interpreting a small architectural modification as the contribution; the contribution is a testable intervention over a fixed pool and an empirical account of when its utility does and does not survive safeguards.
+
+\subsection{Implications}
+
+For a data custodian, the proposed workflow is feasible only inside a trusted environment: real records fit CTGAN, define prototype geometry and profile compatibility, and support candidate scoring. An external analyst receives only the curated synthetic set and the documented modeling policy. Because privacy was not established, the present study does not recommend releasing those records. For a model developer, the primary practical lesson is to diagnose three failures separately: absence of useful modes at generation, destructive concentration during curation, and probability shift at decision transfer.
+
+The locked results support one narrow claim: threshold-aware Pareto curation can improve synthetic-only minority classification in the observed Vigitel regime. They do not establish external transportability, patient benefit, calibrated risk prediction, or a privacy guarantee.
