@@ -5,15 +5,19 @@ Health datasets combine sensitive information, mixed numerical and categorical v
 
 Rare-outcome learning is commonly framed as a class-imbalance problem. Random resampling, the Synthetic Minority Over-sampling Technique (SMOTE), class weighting, and conditional generation increase the number or influence of positive-class observations \citep{chawla2002,he2009}. More data, however, need not provide more information when positive and negative observations overlap in feature space. Class prevalence and class overlap are distinct properties: data-level or algorithm-level imbalance correction changes representation or decision cost, whereas it does not necessarily repair weak class-conditional geometry \citep{he2009}.
 
-Existing synthetic-health-data evaluations typically assess global resemblance, downstream utility, and privacy after generation \citep{goncalves2020,hernandez2023,pezoulas2024}. They provide less guidance on whether post-generation control of class geometry improves rare-outcome prediction, when such control fails, and whether apparent gains arise by discarding difficult but legitimate positive cases. This gap motivates the present study. Our objective is to determine whether separability-aware candidate selection adds predictive value beyond class-count correction and standard generation, while explicitly measuring calibration, positive-class coverage and diversity, and empirical privacy risk.
+Existing synthetic-health-data evaluations typically assess global resemblance, downstream utility, and privacy after generation \citep{goncalves2020,hernandez2023,pezoulas2024}. They provide less guidance on whether post-generation control of class geometry improves rare-outcome prediction, when such control fails, and whether apparent gains arise by discarding difficult but legitimate positive cases \alex{references...}. This gap motivates the present study. Our objective is to determine whether separability-aware candidate selection adds predictive value beyond class-count correction and standard generation, while explicitly measuring calibration, positive-class coverage and diversity, and empirical privacy risk.
+
+\alex{In this point, I think that is need to add a note about the three datasets used by this work before to mention the proposal of this work...}
 
 We developed \sepa{}, a post-generation mechanism that draws an oversized candidate pool and ranks records using proximity to the real training manifold and label-consistent geometric evidence. It retains a prespecified class count, separating the effect of candidate selection from a change in class ratio. We first isolate the mechanism in Vigitel obesity and COVID-19 hospital mortality, then evaluate practical augmentation across those tasks plus Vigitel current smoking and landmark-defined kidney-cohort mortality.
 
-In the completed augmentation benchmark, mean AUPRC differences between \sepa{} and standard CTGAN were 0.012 for COVID-19 mortality, 0.009 for Vigitel obesity, 0.031 for Vigitel smoking, and 0.005 for kidney mortality. After correction for repeated cross-validation and Holm adjustment, only the smoking contrast excluded zero. TVAE differences were small and inconsistent, and simple resampling or real-only training remained competitive. These results test the selection rule without assuming that it will improve every task.
+\alex{The results does not entry here, maybe after ``Study Scope''. We need to think a better way to describe them.} In the completed augmentation benchmark, mean AUPRC differences between \sepa{} and standard CTGAN were 0.012 for COVID-19 mortality, 0.009 for Vigitel obesity, 0.031 for Vigitel smoking, and 0.005 for kidney mortality \alex{note for myself: check the positive class ratio in each dataset to compare with AUPRC values.}. After correction for repeated cross-validation and Holm adjustment, only the smoking contrast excluded zero. TVAE differences were small and inconsistent, and simple resampling or real-only training remained competitive. These results test the selection rule without assuming that it will improve every task.
+
+\alex{\textbf{NOTE:} The acronyms should be defined at the first time they appear in text, no exceptions.}
 
 \subsection{Research Questions}
 
-The study addresses three research questions:
+The study addresses three Research Questions (RQ):
 \begin{description}[leftmargin=1.2cm,style=nextline]
 \item[\textbf{RQ1:}] Is data-level or algorithm-level class-imbalance correction sufficient, or does class overlap limit the utility of synthetic augmentation?
 \item[\textbf{RQ2:}] Does separability-aware selection improve rare-outcome prediction beyond random sampling, SMOTE, class weighting, and unconstrained generation?
@@ -27,9 +31,15 @@ The mechanism experiment uses leakage-controlled synthetic-to-real evaluation fo
 The work has four parts:
 \begin{enumerate}[leftmargin=*]
 \item It frames class overlap as a target distinct from class imbalance and global fidelity in synthetic health-data augmentation.
+
 \item It introduces an auditable post-generation selection mechanism whose effect can be separated from generator fitting and class-count correction.
-\item It uses a factorial experiment to attribute the strong Vigitel obesity synthetic-to-real change to separability weighting while reporting the COVID-19 null attribution with equal emphasis.
+
+\item It uses a factorial experiment to attribute the strong Vigitel obesity synthetic-to-real change to separability weighting while reporting the COVID-19 null attribution with equal emphasis. \alex{and the Vigitel smoking and the Kidney cohort mortability?}
+
 \item It tests whether selection concentrates easy cases through a common benchmark spanning four outcome tasks, two generator families, conventional imbalance baselines, calibration, positive-class structure, and privacy diagnostics.
 \end{enumerate}
 
 The remainder of the paper reviews synthetic tabular health data and rare-outcome evaluation, defines the datasets and leakage-controlled protocols, reports common and dataset-specific results, and concludes with limitations and requirements for external validation.
+
+
+\alex{Description of main results and contributions...}
